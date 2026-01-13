@@ -31,62 +31,50 @@ local function createPositionHUD(): (ScreenGui, TextLabel)
 	-- Outer frame (border)
 	local outerFrame: Frame = Instance.new("Frame")
 	outerFrame.Name = "OuterFrame"
-	outerFrame.Size = UDim2.new(0, 180, 0, 70)
-	outerFrame.Position = UDim2.new(0, 20, 1, -90)
+	outerFrame.Size = UDim2.new(0, 110, 0, 44)
+	outerFrame.Position = UDim2.new(0, 16, 1, -60)
 	outerFrame.BackgroundColor3 = COLORS.BORDER
 	outerFrame.BorderSizePixel = 0
 	outerFrame.Parent = screenGui
 
 	-- Add rounded corners
 	local outerCorner: UICorner = Instance.new("UICorner")
-	outerCorner.CornerRadius = UDim.new(0, 8)
+	outerCorner.CornerRadius = UDim.new(0, 6)
 	outerCorner.Parent = outerFrame
 
 	-- Inner frame (main background)
 	local innerFrame: Frame = Instance.new("Frame")
 	innerFrame.Name = "InnerFrame"
-	innerFrame.Size = UDim2.new(1, -8, 1, -8)
-	innerFrame.Position = UDim2.new(0, 4, 0, 4)
+	innerFrame.Size = UDim2.new(1, -6, 1, -6)
+	innerFrame.Position = UDim2.new(0, 3, 0, 3)
 	innerFrame.BackgroundColor3 = COLORS.FRAME
 	innerFrame.BorderSizePixel = 0
 	innerFrame.Parent = outerFrame
 
 	-- Add rounded corners to inner frame
 	local innerCorner: UICorner = Instance.new("UICorner")
-	innerCorner.CornerRadius = UDim.new(0, 6)
+	innerCorner.CornerRadius = UDim.new(0, 4)
 	innerCorner.Parent = innerFrame
-
-	-- Header label
-	local headerLabel: TextLabel = Instance.new("TextLabel")
-	headerLabel.Name = "Header"
-	headerLabel.Size = UDim2.new(1, 0, 0, 20)
-	headerLabel.Position = UDim2.new(0, 0, 0, 4)
-	headerLabel.BackgroundTransparency = 1
-	headerLabel.Text = "Position"
-	headerLabel.TextColor3 = COLORS.TEXT
-	headerLabel.TextSize = 14
-	headerLabel.Font = Enum.Font.Antique
-	headerLabel.Parent = innerFrame
 
 	-- Position text label
 	local positionLabel: TextLabel = Instance.new("TextLabel")
 	positionLabel.Name = "PositionText"
-	positionLabel.Size = UDim2.new(1, -16, 1, -28)
-	positionLabel.Position = UDim2.new(0, 8, 0, 24)
+	positionLabel.Size = UDim2.new(1, -12, 1, -8)
+	positionLabel.Position = UDim2.new(0, 6, 0, 4)
 	positionLabel.BackgroundTransparency = 1
 	positionLabel.Text = "X: 0\nZ: 0"
 	positionLabel.TextColor3 = COLORS.TEXT
-	positionLabel.TextSize = 18
-	positionLabel.Font = Enum.Font.Antique
+	positionLabel.TextSize = 14
+	positionLabel.Font = Enum.Font.GothamBold
 	positionLabel.TextXAlignment = Enum.TextXAlignment.Left
-	positionLabel.TextYAlignment = Enum.TextYAlignment.Top
+	positionLabel.TextYAlignment = Enum.TextYAlignment.Center
 	positionLabel.Parent = innerFrame
 
 	-- Add text stroke for readability
 	local stroke: UIStroke = Instance.new("UIStroke")
 	stroke.Thickness = 1
 	stroke.Color = COLORS.BACKGROUND
-	stroke.Transparency = 0.5
+	stroke.Transparency = 0.3
 	stroke.Parent = positionLabel
 
 	screenGui.Parent = player:WaitForChild("PlayerGui")
