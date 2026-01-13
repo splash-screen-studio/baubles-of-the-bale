@@ -22,6 +22,9 @@ local COLORS = {
 	SIGN_WOOD = Color3.fromRGB(139, 90, 43),      -- Lighter oak
 	SIGN_BORDER = Color3.fromRGB(62, 39, 18),     -- Dark trim
 	TEXT_COLOR = Color3.fromRGB(45, 30, 15),      -- Dark brown ink
+	TORCH_HANDLE = Color3.fromRGB(79, 52, 26),    -- Dark wood for torch
+	TORCH_HEAD = Color3.fromRGB(54, 54, 54),      -- Charred top
+	TORCH_LIGHT = Color3.fromRGB(255, 147, 41),   -- Warm firelight
 }
 
 -- Sign dimensions
@@ -31,6 +34,114 @@ local SIGN_WIDTH: number = 12
 local SIGN_HEIGHT: number = 6
 local SIGN_THICKNESS: number = 3
 local BORDER_SIZE: number = 0.4
+
+-- Torch dimensions
+local TORCH_HEIGHT: number = 3
+local TORCH_WIDTH: number = 0.5
+local TORCH_OFFSET_FROM_SIGN: number = 3
+
+--[[
+	Creates a medieval wall torch with fire and light
+]]
+local function createTorch(parent: Instance, position: Vector3, facingDirection: Vector3): Model
+	local torchModel: Model = Instance.new("Model")
+	torchModel.Name = "Torch"
+
+	-- Torch handle/bracket
+	local handle: Part = Instance.new("Part")
+	handle.Name = "TorchHandle"
+	handle.Size = Vector3.new(TORCH_WIDTH, TORCH_HEIGHT, TORCH_WIDTH)
+	handle.Position = position
+	handle.Anchored = true
+	handle.Color = COLORS.TORCH_HANDLE
+	handle.Material = Enum.Material.Wood
+	handle.Parent = torchModel
+
+	-- Torch head (where fire sits)
+	local head: Part = Instance.new("Part")
+	head.Name = "TorchHead"
+	head.Size = Vector3.new(TORCH_WIDTH + 0.3, 0.5, TORCH_WIDTH + 0.3)
+	head.Position = position + Vector3.new(0, TORCH_HEIGHT / 2 + 0.25, 0)
+	head.Anchored = true
+	head.Color = COLORS.TORCH_HEAD
+	head.Material = Enum.Material.Slate
+	head.Parent = torchModel
+
+	-- Fire effect
+	local fire: Fire = Instance.new("Fire")
+	fire.Heat = 9
+	fire.Size = 5
+	fire.Color = Color3.fromRGB(255, 119, 0)
+	fire.SecondaryColor = Color3.fromRGB(255, 200, 50)
+	fire.Parent = head
+
+	-- Point light for illumination
+	local light: PointLight = Instance.new("PointLight")
+	light.Color = COLORS.TORCH_LIGHT
+	light.Brightness = 2
+	light.Range = 20
+	light.Shadows = true
+	light.Parent = head
+
+	-- Wall bracket (decorative iron bracket)
+	local bracket: Part = Instance.new("Part")
+	bracket.Name = "WallBracket"
+	bracket.Size = Vector3.new(0.3, 0.3, 1.5)
+	bracket.Anchored = true
+	bracket.Color = Color3.fromRGB(50, 50, 50)
+	bracket.Material = Enum.Material.Metal
+
+	-- Position bracket to connect torch to sign
+	local bracketPos: Vector3 = position - Vector3.new(0, TORCH_HEIGHT / 4, 0)
+	bracket.CFrame = CFrame.lookAt(bracketPos, bracketPos + facingDirection) * CFrame.new(0, 0, -0.75)
+	bracket.Parent = torchModel
+
+	torchModel.PrimaryPart = handle
+	torchModel.Parent = parent
+
+	return torchModel
+end
+
+--[[
+	Creates torches on both sides of a sign
+]]
+local function createSignTorches(parent: Instance, signBoard: Part): ()
+	local signCFrame: CFrame = signBoard.CFrame
+	local signRight: Vector3 = signCFrame.RightVector
+	local signForward: Vector3 = signCFrame.LookVector
+
+	-- Position torches on left and right sides of sign, offset in front and back
+	local torchHeight: number = signBoard.Position.Y - 1
+	local horizontalOffset: number = SIGN_WIDTH / 2 + 1.5
+
+	-- Front-left torch
+	local frontLeftPos: Vector3 = signBoard.Position
+		- signRight * horizontalOffset
+		- signForward * TORCH_OFFSET_FROM_SIGN
+	frontLeftPos = Vector3.new(frontLeftPos.X, torchHeight, frontLeftPos.Z)
+	createTorch(parent, frontLeftPos, signForward)
+
+	-- Front-right torch
+	local frontRightPos: Vector3 = signBoard.Position
+		+ signRight * horizontalOffset
+		- signForward * TORCH_OFFSET_FROM_SIGN
+	frontRightPos = Vector3.new(frontRightPos.X, torchHeight, frontRightPos.Z)
+	createTorch(parent, frontRightPos, signForward)
+
+	-- Back-left torch
+	local backLeftPos: Vector3 = signBoard.Position
+		- signRight * horizontalOffset
+		+ signForward * TORCH_OFFSET_FROM_SIGN
+	backLeftPos = Vector3.new(backLeftPos.X, torchHeight, backLeftPos.Z)
+	createTorch(parent, backLeftPos, -signForward)
+
+	-- Back-right torch
+	local backRightPos: Vector3 = signBoard.Position
+		+ signRight * horizontalOffset
+		+ signForward * TORCH_OFFSET_FROM_SIGN
+	backRightPos = Vector3.new(backRightPos.X, torchHeight, backRightPos.Z)
+	createTorch(parent, backRightPos, -signForward)
+end
 
 --[[
 	Creates a medieval wooden post
@@ -183,6 +294,9 @@ local function createCoordinateSign(signData: {position: Vector3, text: string})
 	-- Add text to both front and back faces
 	createSignText(signBoard, signData.text, Enum.NormalId.Front)
 	createSignText(signBoard, signData.text, Enum.NormalId.Back)
+
+	-- Add torches to illuminate both sides
+	createSignTorches(signModel, signBoard)
 
 	-- Set primary part for the model
 	signModel.PrimaryPart = signBoard
