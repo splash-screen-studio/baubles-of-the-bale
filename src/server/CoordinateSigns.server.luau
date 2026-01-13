@@ -18,10 +18,10 @@ local SIGN_DATA: {{position: Vector3, text: string}} = {
 
 -- Medieval color palette
 local COLORS = {
-	POST_WOOD = Color3.fromRGB(101, 67, 33),      -- Dark oak brown
-	SIGN_WOOD = Color3.fromRGB(139, 90, 43),      -- Lighter oak
-	SIGN_BORDER = Color3.fromRGB(62, 39, 18),     -- Dark trim
-	TEXT_COLOR = Color3.fromRGB(45, 30, 15),      -- Dark brown ink
+	POST_WOOD = Color3.fromRGB(192, 157, 107),    -- Light birch wood
+	SIGN_WOOD = Color3.fromRGB(222, 193, 150),    -- Pale oak/pine
+	SIGN_BORDER = Color3.fromRGB(139, 105, 65),   -- Medium wood trim
+	TEXT_COLOR = Color3.fromRGB(25, 20, 15),      -- Dark charcoal ink
 }
 
 -- Sign dimensions
