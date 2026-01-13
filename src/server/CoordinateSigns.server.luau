@@ -29,7 +29,7 @@ local POST_HEIGHT: number = 8
 local POST_WIDTH: number = 1.5
 local SIGN_WIDTH: number = 12
 local SIGN_HEIGHT: number = 6
-local SIGN_THICKNESS: number = 0.8
+local SIGN_THICKNESS: number = 3
 local BORDER_SIZE: number = 0.4
 
 --[[
