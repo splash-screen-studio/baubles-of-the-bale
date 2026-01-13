@@ -32,6 +32,18 @@
     "Workspace": {
       "$properties": {
         "FilteringEnabled": true
+      },
+      "SpawnLocation": {
+        "$className": "SpawnLocation",
+        "$properties": {
+          "Anchored": true,
+          "Position": [0, 3, 100],
+          "Size": [6, 1, 6],
+          "Transparency": 1,
+          "Neutral": true,
+          "AllowTeamChangeOnTouch": false,
+          "Enabled": true
+        }
       }
     },
     "Lighting": {
