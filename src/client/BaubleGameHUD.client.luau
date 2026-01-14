@@ -9,6 +9,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
@@ -121,6 +122,56 @@ hitSound.Parent = SoundService
 
 local currentlyActive: boolean = false
 local CROSSFADE_TIME: number = 0.5
+
+-- Simple zapper range indicator lines (shows max range: 8 studs at 60 degrees)
+local ZAPPER_RANGE: number = 8
+local ZAPPER_ANGLE: number = 60
+
+local leftBeam: Part = Instance.new("Part")
+leftBeam.Name = "ZapperLineLeft"
+leftBeam.Size = Vector3.new(0.2, 0.2, ZAPPER_RANGE)
+leftBeam.Anchored = true
+leftBeam.CanCollide = false
+leftBeam.Material = Enum.Material.Neon
+leftBeam.Color = Color3.fromRGB(100, 180, 255)
+leftBeam.Transparency = 0.3
+leftBeam.CastShadow = false
+leftBeam.Parent = Workspace
+
+local rightBeam: Part = Instance.new("Part")
+rightBeam.Name = "ZapperLineRight"
+rightBeam.Size = Vector3.new(0.2, 0.2, ZAPPER_RANGE)
+rightBeam.Anchored = true
+rightBeam.CanCollide = false
+rightBeam.Material = Enum.Material.Neon
+rightBeam.Color = Color3.fromRGB(100, 180, 255)
+rightBeam.Transparency = 0.3
+rightBeam.CastShadow = false
+rightBeam.Parent = Workspace
+
+-- Update beam positions every frame
+RunService.RenderStepped:Connect(function()
+	local character = player.Character
+	if not character then return end
+
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	local pos: Vector3 = hrp.Position
+	local lookCFrame: CFrame = hrp.CFrame
+
+	-- Left beam (60 degrees left)
+	local leftDir: CFrame = lookCFrame * CFrame.Angles(0, math.rad(ZAPPER_ANGLE), 0)
+	local leftEnd: Vector3 = pos + leftDir.LookVector * ZAPPER_RANGE
+	local leftMid: Vector3 = (pos + leftEnd) / 2
+	leftBeam.CFrame = CFrame.lookAt(leftMid, leftEnd)
+
+	-- Right beam (60 degrees right)
+	local rightDir: CFrame = lookCFrame * CFrame.Angles(0, math.rad(-ZAPPER_ANGLE), 0)
+	local rightEnd: Vector3 = pos + rightDir.LookVector * ZAPPER_RANGE
+	local rightMid: Vector3 = (pos + rightEnd) / 2
+	rightBeam.CFrame = CFrame.lookAt(rightMid, rightEnd)
+end)
 
 --[[
 	Update the HUD display
