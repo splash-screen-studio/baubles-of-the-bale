@@ -62,8 +62,8 @@ flashOverlay.Parent = screenGui
 -- Main HUD container (top center, compact)
 local hudContainer: Frame = Instance.new("Frame")
 hudContainer.Name = "HUDContainer"
-hudContainer.Size = UDim2.new(0, 180, 0, 58)
-hudContainer.Position = UDim2.new(0.5, -90, 0, 0)
+hudContainer.Size = UDim2.new(0, 240, 0, 58)
+hudContainer.Position = UDim2.new(0.5, -120, 0, 0)
 hudContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 hudContainer.BackgroundTransparency = 0.5
 hudContainer.BorderSizePixel = 0
