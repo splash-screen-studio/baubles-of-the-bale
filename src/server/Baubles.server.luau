@@ -6,9 +6,11 @@
 
 local Workspace = game:GetService("Workspace")
 local Debris = game:GetService("Debris")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Configuration
-local SPAWN_INTERVAL: number = 0.3 -- Seconds between spawns
+local BASE_SPAWN_INTERVAL: number = 0.5 -- 60% of original rate (was 0.3)
+local MIN_SPAWN_INTERVAL: number = 0.15 -- Fastest spawn rate at high scores
 local SPAWN_HEIGHT: number = 200 -- How high baubles spawn
 local SPAWN_RADIUS: number = 300 -- Horizontal spawn area radius
 local SPAWN_CENTER: Vector3 = Vector3.new(50, 0, -100) -- Center of spawn area
@@ -134,6 +136,42 @@ local function spawnBauble(): ()
 	Debris:AddItem(bauble, BAUBLE_LIFETIME)
 end
 
+-- Track highest score for spawn rate boost
+local highestPlayerScore: number = 0
+
+--[[
+	Get current spawn interval based on highest player score
+	Starts at 0.5s (60% rate), speeds up to 0.15s at score 50+
+]]
+local function getSpawnInterval(): number
+	if highestPlayerScore >= 50 then
+		return MIN_SPAWN_INTERVAL
+	elseif highestPlayerScore >= 5 then
+		-- Linear from 0.5 at 5 to 0.15 at 50
+		return BASE_SPAWN_INTERVAL - (highestPlayerScore - 5) * (0.35 / 45)
+	else
+		return BASE_SPAWN_INTERVAL
+	end
+end
+
+-- BindableEvent for other scripts to trigger extra spawns
+local spawnBaublesEvent: BindableEvent = Instance.new("BindableEvent")
+spawnBaublesEvent.Name = "SpawnBaubles"
+spawnBaublesEvent.Parent = ReplicatedStorage
+
+-- Listen for spawn requests (e.g., 2-for-1 on zap)
+spawnBaublesEvent.Event:Connect(function(count: number, newHighScore: number?)
+	-- Update highest score if provided
+	if newHighScore and newHighScore > highestPlayerScore then
+		highestPlayerScore = newHighScore
+	end
+
+	-- Spawn requested number of baubles
+	for i = 1, count do
+		spawnBauble()
+	end
+end)
+
 --[[
 	Main spawning loop
 ]]
@@ -142,7 +180,7 @@ local function startBaubleRain(): ()
 
 	while true do
 		spawnBauble()
-		task.wait(SPAWN_INTERVAL)
+		task.wait(getSpawnInterval())
 	end
 end
 

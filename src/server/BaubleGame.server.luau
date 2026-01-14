@@ -218,6 +218,12 @@ local function onBaubleTouched(bauble: Part, player: Player): ()
 	-- Remove the bauble
 	bauble:Destroy()
 
+	-- Update spawn rate based on best score
+	local spawnEvent = ReplicatedStorage:FindFirstChild("SpawnBaubles")
+	if spawnEvent then
+		spawnEvent:Fire(0, data.bestScore) -- 0 spawns, just update rate
+	end
+
 	-- Update leader
 	updateLeader()
 end
@@ -323,6 +329,12 @@ local function onBaubleZapped(bauble: Part, player: Player): ()
 
 	-- Remove the bauble
 	bauble:Destroy()
+
+	-- Spawn 2 replacement baubles (2-for-1 zap bonus)
+	local spawnEvent = ReplicatedStorage:FindFirstChild("SpawnBaubles")
+	if spawnEvent then
+		spawnEvent:Fire(2, data.bestScore)
+	end
 
 	-- Update leader
 	updateLeader()
