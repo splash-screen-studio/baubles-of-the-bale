@@ -19,6 +19,8 @@ local BREAK_DURATION: number = 30
 local STARTING_GOAL: number = 1
 local GOAL_DECREASE_ON_DEATH: number = 1
 local ACTIVE_MUSIC_ID: string = "rbxassetid://126431844684249"
+local NORMAL_WALK_SPEED: number = 16
+local ACTIVE_WALK_SPEED: number = 48 -- 3x faster
 
 -- Create RemoteEvents for client communication
 local eventsFolder: Folder = Instance.new("Folder")
@@ -248,6 +250,21 @@ end
 --[[
 	Start active period
 ]]
+--[[
+	Set walk speed for all players
+]]
+local function setAllPlayersSpeed(speed: number): ()
+	for _, player in ipairs(Players:GetPlayers()) do
+		local character = player.Character
+		if character then
+			local humanoid = character:FindFirstChild("Humanoid")
+			if humanoid then
+				humanoid.WalkSpeed = speed
+			end
+		end
+	end
+end
+
 local function startActivePeriod(): ()
 	print("[BaubleGame] Active period started!")
 	isActiveMode = true
@@ -264,6 +281,9 @@ local function startActivePeriod(): ()
 		scoreEvent:FireClient(player, 0, data.goal)
 	end
 
+	-- Speed boost!
+	setAllPlayersSpeed(ACTIVE_WALK_SPEED)
+
 	-- Notify all clients
 	gameStateEvent:FireAllClients(true, ACTIVE_DURATION, ACTIVE_MUSIC_ID)
 end
@@ -275,6 +295,9 @@ local function startBreakPeriod(): ()
 	print("[BaubleGame] Break period started!")
 	isActiveMode = false
 	timeRemaining = BREAK_DURATION
+
+	-- Reset to normal speed
+	setAllPlayersSpeed(NORMAL_WALK_SPEED)
 
 	-- Notify all clients
 	gameStateEvent:FireAllClients(false, BREAK_DURATION, nil)
@@ -319,6 +342,14 @@ end)
 -- Player connections
 Players.PlayerAdded:Connect(function(player)
 	initPlayerData(player)
+
+	-- Handle character spawn/respawn for speed setting
+	player.CharacterAdded:Connect(function(character)
+		local humanoid = character:WaitForChild("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = isActiveMode and ACTIVE_WALK_SPEED or NORMAL_WALK_SPEED
+		end
+	end)
 
 	-- Send initial state
 	task.defer(function()
