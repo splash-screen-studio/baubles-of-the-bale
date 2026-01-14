@@ -152,8 +152,8 @@ rightBeam.Parent = Workspace
 
 -- Update beam positions every frame (only CFrame, not Size)
 RunService.RenderStepped:Connect(function()
-	-- Skip if no zapper yet
-	if currentZapperRange <= 0 then return end
+	-- Skip if no zapper or during break
+	if currentZapperRange <= 0 or not isActiveMode then return end
 
 	local character = player.Character
 	if not character then return end
@@ -341,6 +341,15 @@ gameStateEvent.OnClientEvent:Connect(function(active: boolean, time: number, act
 	timeRemaining = time
 	updateHUD()
 
+	-- Show/hide zapper beams based on mode
+	if active and currentZapperRange > 0 then
+		leftBeam.Transparency = 0.3
+		rightBeam.Transparency = 0.3
+	else
+		leftBeam.Transparency = 1
+		rightBeam.Transparency = 1
+	end
+
 	-- Start active music 1 second early (when break has 1 second left)
 	if not active and time <= 1 then
 		updateMusic(ACTIVE_MUSIC_ID)
@@ -371,8 +380,11 @@ zapperRangeEvent.OnClientEvent:Connect(function(newRange: number)
 	if newRange > 0 then
 		leftBeam.Size = Vector3.new(0.2, 0.2, newRange)
 		rightBeam.Size = Vector3.new(0.2, 0.2, newRange)
-		leftBeam.Transparency = 0.3
-		rightBeam.Transparency = 0.3
+		-- Only show beams during active mode
+		if isActiveMode then
+			leftBeam.Transparency = 0.3
+			rightBeam.Transparency = 0.3
+		end
 	else
 		leftBeam.Transparency = 1
 		rightBeam.Transparency = 1
