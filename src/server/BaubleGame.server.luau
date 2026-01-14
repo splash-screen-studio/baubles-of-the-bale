@@ -49,6 +49,10 @@ local toggleActiveMode: RemoteEvent = Instance.new("RemoteEvent")
 toggleActiveMode.Name = "ToggleActiveMode"
 toggleActiveMode.Parent = eventsFolder
 
+local getPlayerState: RemoteFunction = Instance.new("RemoteFunction")
+getPlayerState.Name = "GetPlayerState"
+getPlayerState.Parent = eventsFolder
+
 -- Player data
 type PlayerData = {
 	goal: number,
@@ -330,6 +334,31 @@ Players.PlayerRemoving:Connect(cleanupPlayerData)
 -- Initialize existing players
 for _, player in ipairs(Players:GetPlayers()) do
 	initPlayerData(player)
+end
+
+--[[
+	Handle client request for current state
+]]
+getPlayerState.OnServerInvoke = function(player: Player)
+	local data = playerData[player]
+	if not data then
+		initPlayerData(player)
+		data = playerData[player]
+	end
+
+	local leaderName: string = currentLeader and currentLeader.Name or "None"
+
+	print("[BaubleGame] Sending state to", player.Name, "- score:", data.currentScore, "goal:", data.goal)
+
+	return {
+		isActiveMode = isActiveMode,
+		timeRemaining = timeRemaining,
+		currentScore = data.currentScore,
+		goal = data.goal,
+		leaderName = leaderName,
+		leaderScore = currentLeaderScore,
+		activeModeEnabled = data.activeModeEnabled,
+	}
 end
 
 -- Start the game

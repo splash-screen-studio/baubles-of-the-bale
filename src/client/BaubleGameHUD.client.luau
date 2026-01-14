@@ -29,9 +29,11 @@ local baubleTouchedEvent = eventsFolder:WaitForChild("BaubleTouched")
 local leaderEvent = eventsFolder:WaitForChild("LeaderUpdated")
 local playerDiedEvent = eventsFolder:WaitForChild("PlayerDied")
 local toggleActiveMode = eventsFolder:WaitForChild("ToggleActiveMode")
+local getPlayerState = eventsFolder:WaitForChild("GetPlayerState")
 
 -- Configuration
 local RELAXED_MUSIC_ID: string = "rbxassetid://110583378540017"
+local ACTIVE_MUSIC_ID: string = "rbxassetid://126431844684249"
 
 -- State
 local isActiveMode: boolean = false
@@ -294,6 +296,37 @@ playerDiedEvent.OnClientEvent:Connect(function(newGoal: number)
 	updateHUD()
 end)
 
--- Initialize
-print("[BaubleGameHUD] Bauble game HUD initialized!")
+-- Initialize by requesting current state from server
+print("[BaubleGameHUD] Requesting initial state from server...")
+
+local success, state = pcall(function()
+	return getPlayerState:InvokeServer()
+end)
+
+if success and state then
+	isActiveMode = state.isActiveMode
+	timeRemaining = state.timeRemaining
+	currentScore = state.currentScore
+	currentGoal = state.goal
+	activeModeEnabled = state.activeModeEnabled
+
+	print("[BaubleGameHUD] Got state - score:", currentScore, "goal:", currentGoal)
+
+	leaderLabel.Text = string.format("Leader: %s (%d)", state.leaderName, state.leaderScore)
+
+	-- Update toggle button to match server state
+	if activeModeEnabled then
+		toggleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+		toggleButton.Text = "ON"
+	else
+		toggleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+		toggleButton.Text = "OFF"
+	end
+else
+	warn("[BaubleGameHUD] Failed to get initial state:", state)
+end
+
 updateHUD()
+updateMusic(isActiveMode and ACTIVE_MUSIC_ID or nil)
+
+print("[BaubleGameHUD] Bauble game HUD initialized!")
