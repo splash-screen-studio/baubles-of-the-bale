@@ -20,6 +20,9 @@ local COLORS = {
 	WINDOW = Color3.fromRGB(60, 80, 120),
 	WINDOW_FRAME = Color3.fromRGB(50, 50, 55),
 	GOLD = Color3.fromRGB(200, 170, 80),
+	TORCH_HANDLE = Color3.fromRGB(79, 52, 26),
+	TORCH_HEAD = Color3.fromRGB(54, 54, 54),
+	TORCH_LIGHT = Color3.fromRGB(255, 147, 41),
 }
 
 -- Dimensions
@@ -51,6 +54,116 @@ local function createPart(parent: Instance, name: string, size: Vector3, cframe:
 	part.Material = material or Enum.Material.Limestone
 	part.Parent = parent
 	return part
+end
+
+--[[
+	Creates a wall-mounted torch with fire and light
+]]
+local function createTorch(parent: Instance, cframe: CFrame): Model
+	local torchModel: Model = Instance.new("Model")
+	torchModel.Name = "Torch"
+
+	-- Wall bracket
+	local bracket: Part = Instance.new("Part")
+	bracket.Name = "Bracket"
+	bracket.Size = Vector3.new(0.5, 0.5, 2)
+	bracket.CFrame = cframe * CFrame.new(0, 0, -1)
+	bracket.Anchored = true
+	bracket.Color = Color3.fromRGB(50, 50, 50)
+	bracket.Material = Enum.Material.Metal
+	bracket.Parent = torchModel
+
+	-- Torch handle
+	local handle: Part = Instance.new("Part")
+	handle.Name = "Handle"
+	handle.Size = Vector3.new(0.6, 3, 0.6)
+	handle.CFrame = cframe * CFrame.new(0, 1.5, -2)
+	handle.Anchored = true
+	handle.Color = COLORS.TORCH_HANDLE
+	handle.Material = Enum.Material.Wood
+	handle.Parent = torchModel
+
+	-- Torch head
+	local head: Part = Instance.new("Part")
+	head.Name = "Head"
+	head.Size = Vector3.new(0.8, 0.6, 0.8)
+	head.CFrame = cframe * CFrame.new(0, 3.3, -2)
+	head.Anchored = true
+	head.Color = COLORS.TORCH_HEAD
+	head.Material = Enum.Material.Slate
+	head.Parent = torchModel
+
+	-- Fire effect
+	local fire: Fire = Instance.new("Fire")
+	fire.Heat = 9
+	fire.Size = 5
+	fire.Color = Color3.fromRGB(255, 119, 0)
+	fire.SecondaryColor = Color3.fromRGB(255, 200, 50)
+	fire.Parent = head
+
+	-- Point light
+	local light: PointLight = Instance.new("PointLight")
+	light.Color = COLORS.TORCH_LIGHT
+	light.Brightness = 2
+	light.Range = 25
+	light.Shadows = true
+	light.Parent = head
+
+	torchModel.Parent = parent
+	return torchModel
+end
+
+--[[
+	Places torches around the cathedral
+]]
+local function createTorches(parent: Instance, baseCFrame: CFrame): ()
+	-- Torches along nave walls (between buttresses)
+	local windowCount: number = 6
+	local windowSpacing: number = NAVE_LENGTH / (windowCount + 1)
+
+	for i = 1, windowCount do
+		local zPos: number = -windowSpacing * i
+
+		-- Left wall torches (facing outward)
+		createTorch(parent, baseCFrame * CFrame.new(-NAVE_WIDTH/2 - 3, 8, zPos) * CFrame.Angles(0, math.rad(-90), 0))
+
+		-- Right wall torches (facing outward)
+		createTorch(parent, baseCFrame * CFrame.new(NAVE_WIDTH/2 + 3, 8, zPos) * CFrame.Angles(0, math.rad(90), 0))
+	end
+
+	-- Entrance torches (flanking the doors)
+	createTorch(parent, baseCFrame * CFrame.new(-8, 10, 4) * CFrame.Angles(0, math.rad(180), 0))
+	createTorch(parent, baseCFrame * CFrame.new(8, 10, 4) * CFrame.Angles(0, math.rad(180), 0))
+
+	-- Torches at bottom of steps
+	createTorch(parent, baseCFrame * CFrame.new(-12, 4, 14) * CFrame.Angles(0, math.rad(180), 0))
+	createTorch(parent, baseCFrame * CFrame.new(12, 4, 14) * CFrame.Angles(0, math.rad(180), 0))
+
+	-- Transept end torches
+	local transeptZ: number = -NAVE_LENGTH * 0.7
+
+	-- Left transept
+	createTorch(parent, baseCFrame * CFrame.new(-NAVE_WIDTH/2 - TRANSEPT_LENGTH/2 + 2, 10, transeptZ - 8) * CFrame.Angles(0, math.rad(-90), 0))
+	createTorch(parent, baseCFrame * CFrame.new(-NAVE_WIDTH/2 - TRANSEPT_LENGTH/2 + 2, 10, transeptZ + 8) * CFrame.Angles(0, math.rad(-90), 0))
+
+	-- Right transept
+	createTorch(parent, baseCFrame * CFrame.new(NAVE_WIDTH/2 + TRANSEPT_LENGTH/2 - 2, 10, transeptZ - 8) * CFrame.Angles(0, math.rad(90), 0))
+	createTorch(parent, baseCFrame * CFrame.new(NAVE_WIDTH/2 + TRANSEPT_LENGTH/2 - 2, 10, transeptZ + 8) * CFrame.Angles(0, math.rad(90), 0))
+
+	-- Apse torches (around the back)
+	local apseZ: number = -NAVE_LENGTH - APSE_RADIUS/2
+	for i = 1, 4 do
+		local angle: number = math.pi * (i / 5) - math.pi/2
+		local x: number = math.cos(angle) * (APSE_RADIUS + 3)
+		local z: number = math.sin(angle) * (APSE_RADIUS + 3)
+		local torchAngle: number = angle + math.pi/2
+
+		createTorch(parent, baseCFrame * CFrame.new(x, 8, apseZ + z) * CFrame.Angles(0, torchAngle, 0))
+	end
+
+	-- Tower corner torches
+	createTorch(parent, baseCFrame * CFrame.new(-TOWER_SIZE/2 - 2, 12, 2 + TOWER_SIZE/2 + 2) * CFrame.Angles(0, math.rad(180), 0))
+	createTorch(parent, baseCFrame * CFrame.new(TOWER_SIZE/2 + 2, 12, 2 + TOWER_SIZE/2 + 2) * CFrame.Angles(0, math.rad(180), 0))
 end
 
 --[[
@@ -339,6 +452,7 @@ local function buildCathedral(): Model
 	createTower(cathedral, baseCFrame)
 	createEntrance(cathedral, baseCFrame)
 	createApse(cathedral, baseCFrame)
+	createTorches(cathedral, baseCFrame)
 
 	cathedral.Parent = Workspace
 
