@@ -136,6 +136,17 @@ local function updateLeader(): ()
 end
 
 --[[
+	Get zapper range for a player based on best score
+]]
+local function getZapperRange(bestScore: number): number
+	if bestScore < ZAPPER_MIN_SCORE then
+		return 0 -- No zapper yet
+	end
+	-- 5 = 8 studs, 10 = 16 studs, 15 = 24 studs, 20 = 32 studs, etc.
+	return math.floor(bestScore / 5) * 8
+end
+
+--[[
 	Handle bauble touch during active mode
 ]]
 local function onBaubleTouched(bauble: Part, player: Player): ()
@@ -217,17 +228,6 @@ local function setupBaubleDetection(): ()
 			end)
 		end
 	end
-end
-
---[[
-	Get zapper range for a player based on best score
-]]
-local function getZapperRange(bestScore: number): number
-	if bestScore < ZAPPER_MIN_SCORE then
-		return 0 -- No zapper yet
-	end
-	-- 5 = 8 studs, 10 = 16 studs, 15 = 24 studs, 20 = 32 studs, etc.
-	return math.floor(bestScore / 5) * 8
 end
 
 --[[
