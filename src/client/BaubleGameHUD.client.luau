@@ -30,6 +30,7 @@ local baubleTouchedEvent = eventsFolder:WaitForChild("BaubleTouched")
 local leaderEvent = eventsFolder:WaitForChild("LeaderUpdated")
 local playerDiedEvent = eventsFolder:WaitForChild("PlayerDied")
 local zapEvent = eventsFolder:WaitForChild("BaubleZapped")
+local zapperRangeEvent = eventsFolder:WaitForChild("ZapperRangeUpdated")
 local getPlayerState = eventsFolder:WaitForChild("GetPlayerState")
 
 -- Configuration
@@ -123,34 +124,37 @@ hitSound.Parent = SoundService
 local currentlyActive: boolean = false
 local CROSSFADE_TIME: number = 0.5
 
--- Simple zapper range indicator lines (shows max range: 8 studs at 60 degrees)
-local ZAPPER_RANGE: number = 8
+-- Zapper range indicator lines (dynamic based on player best score)
+local currentZapperRange: number = 0 -- Updated by server event
 local ZAPPER_ANGLE: number = 60
 
 local leftBeam: Part = Instance.new("Part")
 leftBeam.Name = "ZapperLineLeft"
-leftBeam.Size = Vector3.new(0.2, 0.2, ZAPPER_RANGE)
+leftBeam.Size = Vector3.new(0.2, 0.2, 1) -- Size updated by event
 leftBeam.Anchored = true
 leftBeam.CanCollide = false
 leftBeam.Material = Enum.Material.Neon
 leftBeam.Color = Color3.fromRGB(100, 180, 255)
-leftBeam.Transparency = 0.3
+leftBeam.Transparency = 1 -- Hidden until zapper unlocked
 leftBeam.CastShadow = false
 leftBeam.Parent = Workspace
 
 local rightBeam: Part = Instance.new("Part")
 rightBeam.Name = "ZapperLineRight"
-rightBeam.Size = Vector3.new(0.2, 0.2, ZAPPER_RANGE)
+rightBeam.Size = Vector3.new(0.2, 0.2, 1) -- Size updated by event
 rightBeam.Anchored = true
 rightBeam.CanCollide = false
 rightBeam.Material = Enum.Material.Neon
 rightBeam.Color = Color3.fromRGB(100, 180, 255)
-rightBeam.Transparency = 0.3
+rightBeam.Transparency = 1 -- Hidden until zapper unlocked
 rightBeam.CastShadow = false
 rightBeam.Parent = Workspace
 
--- Update beam positions every frame
+-- Update beam positions every frame (only CFrame, not Size)
 RunService.RenderStepped:Connect(function()
+	-- Skip if no zapper yet
+	if currentZapperRange <= 0 then return end
+
 	local character = player.Character
 	if not character then return end
 
@@ -162,13 +166,13 @@ RunService.RenderStepped:Connect(function()
 
 	-- Left beam (60 degrees left)
 	local leftDir: CFrame = lookCFrame * CFrame.Angles(0, math.rad(ZAPPER_ANGLE), 0)
-	local leftEnd: Vector3 = pos + leftDir.LookVector * ZAPPER_RANGE
+	local leftEnd: Vector3 = pos + leftDir.LookVector * currentZapperRange
 	local leftMid: Vector3 = (pos + leftEnd) / 2
 	leftBeam.CFrame = CFrame.lookAt(leftMid, leftEnd)
 
 	-- Right beam (60 degrees right)
 	local rightDir: CFrame = lookCFrame * CFrame.Angles(0, math.rad(-ZAPPER_ANGLE), 0)
-	local rightEnd: Vector3 = pos + rightDir.LookVector * ZAPPER_RANGE
+	local rightEnd: Vector3 = pos + rightDir.LookVector * currentZapperRange
 	local rightMid: Vector3 = (pos + rightEnd) / 2
 	rightBeam.CFrame = CFrame.lookAt(rightMid, rightEnd)
 end)
@@ -359,6 +363,22 @@ zapEvent.OnClientEvent:Connect(function(fromPos: Vector3, toPos: Vector3)
 	playZapEffect(fromPos, toPos)
 end)
 
+zapperRangeEvent.OnClientEvent:Connect(function(newRange: number)
+	print("[BaubleGameHUD] Zapper range updated to:", newRange)
+	currentZapperRange = newRange
+
+	-- Update beam sizes (only done here, not in RenderStepped)
+	if newRange > 0 then
+		leftBeam.Size = Vector3.new(0.2, 0.2, newRange)
+		rightBeam.Size = Vector3.new(0.2, 0.2, newRange)
+		leftBeam.Transparency = 0.3
+		rightBeam.Transparency = 0.3
+	else
+		leftBeam.Transparency = 1
+		rightBeam.Transparency = 1
+	end
+end)
+
 leaderEvent.OnClientEvent:Connect(function(leaderName: string, leaderScore: number)
 	print("[BaubleGameHUD] Leader event received:", leaderName, leaderScore)
 	leaderLabel.Text = string.format("Leader: %s (%d)", leaderName, leaderScore)
@@ -402,6 +422,18 @@ if success and state then
 	print("[BaubleGameHUD] Got state - score:", currentScore, "goal:", currentGoal)
 
 	leaderLabel.Text = string.format("Leader: %s (%d)", state.leaderName, state.leaderScore)
+
+	-- Set initial zapper range
+	if state.zapperRange then
+		currentZapperRange = state.zapperRange
+		if currentZapperRange > 0 then
+			leftBeam.Size = Vector3.new(0.2, 0.2, currentZapperRange)
+			rightBeam.Size = Vector3.new(0.2, 0.2, currentZapperRange)
+			leftBeam.Transparency = 0.3
+			rightBeam.Transparency = 0.3
+		end
+		print("[BaubleGameHUD] Initial zapper range:", currentZapperRange)
+	end
 else
 	warn("[BaubleGameHUD] Failed to get initial state:", state)
 end

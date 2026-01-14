@@ -55,6 +55,10 @@ local zapEvent: RemoteEvent = Instance.new("RemoteEvent")
 zapEvent.Name = "BaubleZapped"
 zapEvent.Parent = eventsFolder
 
+local zapperRangeEvent: RemoteEvent = Instance.new("RemoteEvent")
+zapperRangeEvent.Name = "ZapperRangeUpdated"
+zapperRangeEvent.Parent = eventsFolder
+
 local getPlayerState: RemoteFunction = Instance.new("RemoteFunction")
 getPlayerState.Name = "GetPlayerState"
 getPlayerState.Parent = eventsFolder
@@ -152,6 +156,9 @@ local function onBaubleTouched(bauble: Part, player: Player): ()
 	-- Update best score
 	if data.currentScore > data.bestScore then
 		data.bestScore = data.currentScore
+		-- Notify client of new zapper range (fired only when bestScore changes)
+		local newRange: number = getZapperRange(data.bestScore)
+		zapperRangeEvent:FireClient(player, newRange)
 	end
 
 	-- Send score update to client
@@ -219,8 +226,8 @@ local function getZapperRange(bestScore: number): number
 	if bestScore < ZAPPER_MIN_SCORE then
 		return 0 -- No zapper yet
 	end
-	-- 5 = 2 studs, 10 = 4 studs, 15 = 6 studs, etc.
-	return math.floor(bestScore / 5) * 2
+	-- 5 = 8 studs, 10 = 16 studs, 15 = 24 studs, 20 = 32 studs, etc.
+	return math.floor(bestScore / 5) * 8
 end
 
 --[[
@@ -260,6 +267,9 @@ local function onBaubleZapped(bauble: Part, player: Player): ()
 	-- Update best score
 	if data.currentScore > data.bestScore then
 		data.bestScore = data.currentScore
+		-- Notify client of new zapper range (fired only when bestScore changes)
+		local newRange: number = getZapperRange(data.bestScore)
+		zapperRangeEvent:FireClient(player, newRange)
 	end
 
 	-- Send score update to client
@@ -476,6 +486,10 @@ Players.PlayerAdded:Connect(function(player)
 
 			local leaderName: string = currentLeader and currentLeader.Name or "None"
 			leaderEvent:FireAllClients(leaderName, currentLeaderScore)
+
+			-- Send initial zapper range
+			local zapRange: number = getZapperRange(data.bestScore)
+			zapperRangeEvent:FireClient(player, zapRange)
 		end
 	end)
 end)
@@ -508,6 +522,7 @@ getPlayerState.OnServerInvoke = function(player: Player)
 		goal = data.goal,
 		leaderName = leaderName,
 		leaderScore = currentLeaderScore,
+		zapperRange = getZapperRange(data.bestScore),
 	}
 end
 
