@@ -122,6 +122,7 @@ local function updateLeader(): ()
 
 		-- Broadcast leader update to all clients
 		local leaderName: string = currentLeader and currentLeader.Name or "None"
+		print("[BaubleGame] Leader updated:", leaderName, "with score", currentLeaderScore)
 		leaderEvent:FireAllClients(leaderName, currentLeaderScore)
 	end
 end
@@ -138,6 +139,7 @@ local function onBaubleTouched(bauble: Part, player: Player): ()
 
 	-- Increment score
 	data.currentScore = data.currentScore + 1
+	print("[BaubleGame]", player.Name, "collected bauble! Score:", data.currentScore, "/", data.goal)
 
 	-- Update best score
 	if data.currentScore > data.bestScore then

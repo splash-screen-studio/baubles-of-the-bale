@@ -271,6 +271,7 @@ baubleTouchedEvent.OnClientEvent:Connect(function(position: Vector3)
 end)
 
 leaderEvent.OnClientEvent:Connect(function(leaderName: string, leaderScore: number)
+	print("[BaubleGameHUD] Leader event received:", leaderName, leaderScore)
 	leaderLabel.Text = string.format("Leader: %s (%d)", leaderName, leaderScore)
 end)
 
