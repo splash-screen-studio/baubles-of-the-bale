@@ -275,15 +275,15 @@ local function createTransept(parent: Instance, baseCFrame: CFrame): ()
 		baseCFrame * CFrame.new(NAVE_WIDTH/2 + TRANSEPT_LENGTH/4, NAVE_HEIGHT - 3, transeptZ),
 		COLORS.ROOF, Enum.Material.Slate)
 
-	-- Rose windows on transept ends
+	-- Rose windows on transept ends (sticking out 1 stud outside wall)
 	createPart(parent, "RoseWindowLeft",
-		Vector3.new(2, 10, 10),
-		baseCFrame * CFrame.new(-NAVE_WIDTH/2 - TRANSEPT_LENGTH/2 + 1, NAVE_HEIGHT/2, transeptZ),
+		Vector3.new(4, 10, 10),
+		baseCFrame * CFrame.new(-NAVE_WIDTH/2 - TRANSEPT_LENGTH/2 - 0.5, NAVE_HEIGHT/2, transeptZ),
 		COLORS.WINDOW, Enum.Material.Neon)
 
 	createPart(parent, "RoseWindowRight",
-		Vector3.new(2, 10, 10),
-		baseCFrame * CFrame.new(NAVE_WIDTH/2 + TRANSEPT_LENGTH/2 - 1, NAVE_HEIGHT/2, transeptZ),
+		Vector3.new(4, 10, 10),
+		baseCFrame * CFrame.new(NAVE_WIDTH/2 + TRANSEPT_LENGTH/2 + 0.5, NAVE_HEIGHT/2, transeptZ),
 		COLORS.WINDOW, Enum.Material.Neon)
 end
 
@@ -392,10 +392,10 @@ local function createEntrance(parent: Instance, baseCFrame: CFrame): ()
 		baseCFrame * CFrame.new(0, 18, 0),
 		COLORS.STONE_ACCENT)
 
-	-- Rose window above entrance
+	-- Rose window above entrance (sticking out 1 stud outside wall)
 	createPart(parent, "MainRoseWindow",
-		Vector3.new(2, 12, 12),
-		baseCFrame * CFrame.new(0, NAVE_HEIGHT - 8, WALL_THICKNESS/2),
+		Vector3.new(4, 12, 12),
+		baseCFrame * CFrame.new(0, NAVE_HEIGHT - 8, WALL_THICKNESS/2 + 1.5),
 		COLORS.WINDOW, Enum.Material.Neon)
 
 	-- Steps
