@@ -97,57 +97,115 @@ local function createTorch(parent: Instance, cframe: CFrame): Model
 end
 
 --[[
-	Creates the moat around the castle
+	Creates the moat around the castle using terrain water (for swimming physics)
+	with part walls (for clean visual edges)
 ]]
 local function createMoat(parent: Instance, baseCFrame: CFrame): ()
+	local terrain: Terrain = Workspace.Terrain
 	local moatOuterSize: number = CASTLE_SIZE + (MOAT_WIDTH * 2) + 10
-	local moatInnerSize: number = CASTLE_SIZE + 10
 
-	-- Moat water (outer ring)
+	-- Moat dimensions
+	local innerEdge: number = CASTLE_SIZE / 2 + 5
+	local outerEdge: number = innerEdge + MOAT_WIDTH
+	local waterTop: number = -1 -- Water surface just below ground level
+	local waterBottom: number = -MOAT_DEPTH - 2
+
+	-- Helper to fill terrain water at world position
+	local function fillWater(center: Vector3, size: Vector3): ()
+		local worldPos: Vector3 = baseCFrame:PointToWorldSpace(center)
+		terrain:FillBlock(CFrame.new(worldPos), size, Enum.Material.Water)
+	end
+
+	-- Fill terrain water in moat channels
 	-- North moat
-	createPart(parent, "MoatNorth",
-		Vector3.new(moatOuterSize, MOAT_DEPTH, MOAT_WIDTH),
-		baseCFrame * CFrame.new(0, -MOAT_DEPTH/2, CASTLE_SIZE/2 + MOAT_WIDTH/2 + 5),
-		COLORS.WATER, Enum.Material.Water)
+	fillWater(
+		Vector3.new(0, (waterTop + waterBottom) / 2, innerEdge + MOAT_WIDTH / 2),
+		Vector3.new(moatOuterSize, MOAT_DEPTH, MOAT_WIDTH)
+	)
 
 	-- South moat
-	createPart(parent, "MoatSouth",
-		Vector3.new(moatOuterSize, MOAT_DEPTH, MOAT_WIDTH),
-		baseCFrame * CFrame.new(0, -MOAT_DEPTH/2, -CASTLE_SIZE/2 - MOAT_WIDTH/2 - 5),
-		COLORS.WATER, Enum.Material.Water)
+	fillWater(
+		Vector3.new(0, (waterTop + waterBottom) / 2, -innerEdge - MOAT_WIDTH / 2),
+		Vector3.new(moatOuterSize, MOAT_DEPTH, MOAT_WIDTH)
+	)
 
 	-- East moat
-	createPart(parent, "MoatEast",
-		Vector3.new(MOAT_WIDTH, MOAT_DEPTH, CASTLE_SIZE + 10),
-		baseCFrame * CFrame.new(CASTLE_SIZE/2 + MOAT_WIDTH/2 + 5, -MOAT_DEPTH/2, 0),
-		COLORS.WATER, Enum.Material.Water)
+	fillWater(
+		Vector3.new(innerEdge + MOAT_WIDTH / 2, (waterTop + waterBottom) / 2, 0),
+		Vector3.new(MOAT_WIDTH, MOAT_DEPTH, CASTLE_SIZE + 10)
+	)
 
 	-- West moat
-	createPart(parent, "MoatWest",
-		Vector3.new(MOAT_WIDTH, MOAT_DEPTH, CASTLE_SIZE + 10),
-		baseCFrame * CFrame.new(-CASTLE_SIZE/2 - MOAT_WIDTH/2 - 5, -MOAT_DEPTH/2, 0),
-		COLORS.WATER, Enum.Material.Water)
+	fillWater(
+		Vector3.new(-innerEdge - MOAT_WIDTH / 2, (waterTop + waterBottom) / 2, 0),
+		Vector3.new(MOAT_WIDTH, MOAT_DEPTH, CASTLE_SIZE + 10)
+	)
 
-	-- Moat bed (darker bottom)
+	-- Stone walls to contain water and give clean edges
+	-- Outer walls
+	createPart(parent, "MoatOuterWallNorth",
+		Vector3.new(moatOuterSize + 4, MOAT_DEPTH + 4, 3),
+		baseCFrame * CFrame.new(0, -MOAT_DEPTH / 2, outerEdge + 1.5),
+		COLORS.STONE_DARK, Enum.Material.Slate)
+
+	createPart(parent, "MoatOuterWallSouth",
+		Vector3.new(moatOuterSize + 4, MOAT_DEPTH + 4, 3),
+		baseCFrame * CFrame.new(0, -MOAT_DEPTH / 2, -outerEdge - 1.5),
+		COLORS.STONE_DARK, Enum.Material.Slate)
+
+	createPart(parent, "MoatOuterWallEast",
+		Vector3.new(3, MOAT_DEPTH + 4, CASTLE_SIZE + MOAT_WIDTH * 2 + 14),
+		baseCFrame * CFrame.new(outerEdge + 1.5, -MOAT_DEPTH / 2, 0),
+		COLORS.STONE_DARK, Enum.Material.Slate)
+
+	createPart(parent, "MoatOuterWallWest",
+		Vector3.new(3, MOAT_DEPTH + 4, CASTLE_SIZE + MOAT_WIDTH * 2 + 14),
+		baseCFrame * CFrame.new(-outerEdge - 1.5, -MOAT_DEPTH / 2, 0),
+		COLORS.STONE_DARK, Enum.Material.Slate)
+
+	-- Inner walls (against castle)
+	createPart(parent, "MoatInnerWallNorth",
+		Vector3.new(CASTLE_SIZE + 10, MOAT_DEPTH + 4, 3),
+		baseCFrame * CFrame.new(0, -MOAT_DEPTH / 2, innerEdge - 1.5),
+		COLORS.STONE_DARK, Enum.Material.Slate)
+
+	createPart(parent, "MoatInnerWallSouth",
+		Vector3.new(CASTLE_SIZE + 10, MOAT_DEPTH + 4, 3),
+		baseCFrame * CFrame.new(0, -MOAT_DEPTH / 2, -innerEdge + 1.5),
+		COLORS.STONE_DARK, Enum.Material.Slate)
+
+	createPart(parent, "MoatInnerWallEast",
+		Vector3.new(3, MOAT_DEPTH + 4, CASTLE_SIZE + 10),
+		baseCFrame * CFrame.new(innerEdge - 1.5, -MOAT_DEPTH / 2, 0),
+		COLORS.STONE_DARK, Enum.Material.Slate)
+
+	createPart(parent, "MoatInnerWallWest",
+		Vector3.new(3, MOAT_DEPTH + 4, CASTLE_SIZE + 10),
+		baseCFrame * CFrame.new(-innerEdge + 1.5, -MOAT_DEPTH / 2, 0),
+		COLORS.STONE_DARK, Enum.Material.Slate)
+
+	-- Moat bed (bottom)
 	createPart(parent, "MoatBedNorth",
 		Vector3.new(moatOuterSize, 2, MOAT_WIDTH + 4),
-		baseCFrame * CFrame.new(0, -MOAT_DEPTH - 1, CASTLE_SIZE/2 + MOAT_WIDTH/2 + 5),
+		baseCFrame * CFrame.new(0, -MOAT_DEPTH - 2, innerEdge + MOAT_WIDTH / 2),
 		COLORS.STONE_DARK, Enum.Material.Slate)
 
 	createPart(parent, "MoatBedSouth",
 		Vector3.new(moatOuterSize, 2, MOAT_WIDTH + 4),
-		baseCFrame * CFrame.new(0, -MOAT_DEPTH - 1, -CASTLE_SIZE/2 - MOAT_WIDTH/2 - 5),
+		baseCFrame * CFrame.new(0, -MOAT_DEPTH - 2, -innerEdge - MOAT_WIDTH / 2),
 		COLORS.STONE_DARK, Enum.Material.Slate)
 
 	createPart(parent, "MoatBedEast",
 		Vector3.new(MOAT_WIDTH + 4, 2, CASTLE_SIZE + 10),
-		baseCFrame * CFrame.new(CASTLE_SIZE/2 + MOAT_WIDTH/2 + 5, -MOAT_DEPTH - 1, 0),
+		baseCFrame * CFrame.new(innerEdge + MOAT_WIDTH / 2, -MOAT_DEPTH - 2, 0),
 		COLORS.STONE_DARK, Enum.Material.Slate)
 
 	createPart(parent, "MoatBedWest",
 		Vector3.new(MOAT_WIDTH + 4, 2, CASTLE_SIZE + 10),
-		baseCFrame * CFrame.new(-CASTLE_SIZE/2 - MOAT_WIDTH/2 - 5, -MOAT_DEPTH - 1, 0),
+		baseCFrame * CFrame.new(-innerEdge - MOAT_WIDTH / 2, -MOAT_DEPTH - 2, 0),
 		COLORS.STONE_DARK, Enum.Material.Slate)
+
+	print("[Castle] Moat created with terrain water (swimming enabled)")
 end
 
 --[[
