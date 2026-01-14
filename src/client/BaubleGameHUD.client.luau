@@ -30,7 +30,6 @@ local baubleTouchedEvent = eventsFolder:WaitForChild("BaubleTouched")
 local leaderEvent = eventsFolder:WaitForChild("LeaderUpdated")
 local playerDiedEvent = eventsFolder:WaitForChild("PlayerDied")
 local zapEvent = eventsFolder:WaitForChild("BaubleZapped")
-local zapperRangeEvent = eventsFolder:WaitForChild("ZapperRangeUpdated")
 local getPlayerState = eventsFolder:WaitForChild("GetPlayerState")
 
 -- Configuration
@@ -124,46 +123,34 @@ hitSound.Parent = SoundService
 local currentlyActive: boolean = false
 local CROSSFADE_TIME: number = 0.5
 
--- Zapper range indicator lines (length tied to player's zapper level)
-local zapperRange: number = 0
+-- Simple zapper range indicator lines (shows max range: 8 studs at 60 degrees)
+local ZAPPER_RANGE: number = 8
 local ZAPPER_ANGLE: number = 60
 
 local leftBeam: Part = Instance.new("Part")
 leftBeam.Name = "ZapperLineLeft"
-leftBeam.Size = Vector3.new(0.2, 0.2, 1)
+leftBeam.Size = Vector3.new(0.2, 0.2, ZAPPER_RANGE)
 leftBeam.Anchored = true
 leftBeam.CanCollide = false
 leftBeam.Material = Enum.Material.Neon
 leftBeam.Color = Color3.fromRGB(100, 180, 255)
 leftBeam.Transparency = 0.3
 leftBeam.CastShadow = false
-leftBeam.Visible = false
 leftBeam.Parent = Workspace
 
 local rightBeam: Part = Instance.new("Part")
 rightBeam.Name = "ZapperLineRight"
-rightBeam.Size = Vector3.new(0.2, 0.2, 1)
+rightBeam.Size = Vector3.new(0.2, 0.2, ZAPPER_RANGE)
 rightBeam.Anchored = true
 rightBeam.CanCollide = false
 rightBeam.Material = Enum.Material.Neon
 rightBeam.Color = Color3.fromRGB(100, 180, 255)
 rightBeam.Transparency = 0.3
 rightBeam.CastShadow = false
-rightBeam.Visible = false
 rightBeam.Parent = Workspace
 
 -- Update beam positions every frame
 RunService.RenderStepped:Connect(function()
-	-- Hide beams if no zapper
-	if zapperRange <= 0 then
-		leftBeam.Transparency = 1
-		rightBeam.Transparency = 1
-		return
-	else
-		leftBeam.Transparency = 0.3
-		rightBeam.Transparency = 0.3
-	end
-
 	local character = player.Character
 	if not character then return end
 
@@ -173,19 +160,15 @@ RunService.RenderStepped:Connect(function()
 	local pos: Vector3 = hrp.Position
 	local lookCFrame: CFrame = hrp.CFrame
 
-	-- Update beam sizes based on current range
-	leftBeam.Size = Vector3.new(0.2, 0.2, zapperRange)
-	rightBeam.Size = Vector3.new(0.2, 0.2, zapperRange)
-
 	-- Left beam (60 degrees left)
 	local leftDir: CFrame = lookCFrame * CFrame.Angles(0, math.rad(ZAPPER_ANGLE), 0)
-	local leftEnd: Vector3 = pos + leftDir.LookVector * zapperRange
+	local leftEnd: Vector3 = pos + leftDir.LookVector * ZAPPER_RANGE
 	local leftMid: Vector3 = (pos + leftEnd) / 2
 	leftBeam.CFrame = CFrame.lookAt(leftMid, leftEnd)
 
 	-- Right beam (60 degrees right)
 	local rightDir: CFrame = lookCFrame * CFrame.Angles(0, math.rad(-ZAPPER_ANGLE), 0)
-	local rightEnd: Vector3 = pos + rightDir.LookVector * zapperRange
+	local rightEnd: Vector3 = pos + rightDir.LookVector * ZAPPER_RANGE
 	local rightMid: Vector3 = (pos + rightEnd) / 2
 	rightBeam.CFrame = CFrame.lookAt(rightMid, rightEnd)
 end)
@@ -376,11 +359,6 @@ zapEvent.OnClientEvent:Connect(function(fromPos: Vector3, toPos: Vector3)
 	playZapEffect(fromPos, toPos)
 end)
 
-zapperRangeEvent.OnClientEvent:Connect(function(newRange: number)
-	print("[BaubleGameHUD] Zapper range updated to", newRange, "studs")
-	zapperRange = newRange
-end)
-
 leaderEvent.OnClientEvent:Connect(function(leaderName: string, leaderScore: number)
 	print("[BaubleGameHUD] Leader event received:", leaderName, leaderScore)
 	leaderLabel.Text = string.format("Leader: %s (%d)", leaderName, leaderScore)
@@ -420,9 +398,8 @@ if success and state then
 	timeRemaining = state.timeRemaining
 	currentScore = state.currentScore
 	currentGoal = state.goal
-	zapperRange = state.zapperRange or 0
 
-	print("[BaubleGameHUD] Got state - score:", currentScore, "goal:", currentGoal, "zapperRange:", zapperRange)
+	print("[BaubleGameHUD] Got state - score:", currentScore, "goal:", currentGoal)
 
 	leaderLabel.Text = string.format("Leader: %s (%d)", state.leaderName, state.leaderScore)
 else
