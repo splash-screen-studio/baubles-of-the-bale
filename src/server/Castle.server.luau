@@ -39,6 +39,59 @@ local DRAWBRIDGE_LENGTH: number = MOAT_WIDTH + 8
 local DRAWBRIDGE_WIDTH: number = 20
 
 --[[
+	Clears ground tiles in the moat area so terrain water works properly
+]]
+local function clearGroundForMoat(baseCFrame: CFrame): ()
+	print("[Castle] Waiting for ground to generate...")
+
+	-- Wait for Ground folder to exist
+	local groundFolder: Folder? = Workspace:FindFirstChild("Ground")
+	local waitTime: number = 0
+	while not groundFolder and waitTime < 10 do
+		task.wait(0.5)
+		waitTime += 0.5
+		groundFolder = Workspace:FindFirstChild("Ground")
+	end
+
+	if not groundFolder then
+		warn("[Castle] Ground folder not found, skipping ground clearing")
+		return
+	end
+
+	print("[Castle] Clearing ground tiles in moat area...")
+
+	-- Calculate moat bounds in world space
+	local innerEdge: number = CASTLE_SIZE / 2 + 5
+	local outerEdge: number = innerEdge + MOAT_WIDTH + 5 -- Extra buffer
+
+	local tilesRemoved: number = 0
+
+	for _, tile in groundFolder:GetChildren() do
+		if tile:IsA("BasePart") then
+			-- Convert tile position to castle-local space
+			local localPos: Vector3 = baseCFrame:PointToObjectSpace(tile.Position)
+			local absX: number = math.abs(localPos.X)
+			local absZ: number = math.abs(localPos.Z)
+
+			-- Check if tile is in the moat ring
+			-- Moat is between innerEdge and outerEdge on any side
+			local inMoatX: boolean = absX >= innerEdge and absX <= outerEdge
+			local inMoatZ: boolean = absZ >= innerEdge and absZ <= outerEdge
+			local insideOuter: boolean = absX <= outerEdge and absZ <= outerEdge
+
+			-- Tile is in moat if it's within outer bounds AND
+			-- (in the X moat channel OR in the Z moat channel)
+			if insideOuter and (inMoatX or inMoatZ) then
+				tile:Destroy()
+				tilesRemoved += 1
+			end
+		end
+	end
+
+	print("[Castle] Removed", tilesRemoved, "ground tiles for moat")
+end
+
+--[[
 	Creates a part with common properties
 ]]
 local function createPart(parent: Instance, name: string, size: Vector3, cframe: CFrame, color: Color3, material: Enum.Material?): Part
@@ -569,6 +622,9 @@ local function buildCastle(): Model
 
 	-- Create base CFrame
 	local baseCFrame: CFrame = CFrame.new(POSITION) * CFrame.Angles(0, FACING_ANGLE, 0)
+
+	-- Clear ground tiles where moat will be (must happen before moat creation)
+	clearGroundForMoat(baseCFrame)
 
 	-- Build all components
 	createMoat(castle, baseCFrame)
