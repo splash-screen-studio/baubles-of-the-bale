@@ -2,10 +2,9 @@
 	BaubleGameHUD.client.luau
 
 	Client-side HUD for the bauble collection game.
-	Shows goal, count, leader, mode indicator, and timer.
+	Compact display: BREAK during break, score during active, always shows leader.
 	Handles flash effects on bauble collection.
 	Switches music between active and relaxed modes.
-	Includes toggle to disable active mode.
 ]]
 
 local Players = game:GetService("Players")
@@ -58,65 +57,41 @@ flashOverlay.BorderSizePixel = 0
 flashOverlay.ZIndex = 100
 flashOverlay.Parent = screenGui
 
--- Main HUD container (top center)
+-- Main HUD container (top center, compact)
 local hudContainer: Frame = Instance.new("Frame")
 hudContainer.Name = "HUDContainer"
-hudContainer.Size = UDim2.new(0, 300, 0, 120)
-hudContainer.Position = UDim2.new(0.5, -150, 0, 10)
+hudContainer.Size = UDim2.new(0, 160, 0, 55)
+hudContainer.Position = UDim2.new(0.5, -80, 0, 8)
 hudContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 hudContainer.BackgroundTransparency = 0.5
 hudContainer.BorderSizePixel = 0
 hudContainer.Parent = screenGui
 
 local hudCorner: UICorner = Instance.new("UICorner")
-hudCorner.CornerRadius = UDim.new(0, 12)
+hudCorner.CornerRadius = UDim.new(0, 10)
 hudCorner.Parent = hudContainer
 
--- Mode indicator (ACTIVE / BREAK)
-local modeLabel: TextLabel = Instance.new("TextLabel")
-modeLabel.Name = "ModeLabel"
-modeLabel.Size = UDim2.new(1, 0, 0, 30)
-modeLabel.Position = UDim2.new(0, 0, 0, 5)
-modeLabel.BackgroundTransparency = 1
-modeLabel.Text = "BREAK"
-modeLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
-modeLabel.TextSize = 24
-modeLabel.Font = Enum.Font.GothamBold
-modeLabel.Parent = hudContainer
+-- Main display (shows BREAK or score like 0/12)
+local mainLabel: TextLabel = Instance.new("TextLabel")
+mainLabel.Name = "MainLabel"
+mainLabel.Size = UDim2.new(1, 0, 0, 28)
+mainLabel.Position = UDim2.new(0, 0, 0, 5)
+mainLabel.BackgroundTransparency = 1
+mainLabel.Text = "BREAK"
+mainLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
+mainLabel.TextSize = 24
+mainLabel.Font = Enum.Font.GothamBold
+mainLabel.Parent = hudContainer
 
--- Timer label
-local timerLabel: TextLabel = Instance.new("TextLabel")
-timerLabel.Name = "TimerLabel"
-timerLabel.Size = UDim2.new(1, 0, 0, 25)
-timerLabel.Position = UDim2.new(0, 0, 0, 32)
-timerLabel.BackgroundTransparency = 1
-timerLabel.Text = "0:30"
-timerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-timerLabel.TextSize = 20
-timerLabel.Font = Enum.Font.GothamMedium
-timerLabel.Parent = hudContainer
-
--- Score display (count / goal)
-local scoreLabel: TextLabel = Instance.new("TextLabel")
-scoreLabel.Name = "ScoreLabel"
-scoreLabel.Size = UDim2.new(1, 0, 0, 30)
-scoreLabel.Position = UDim2.new(0, 0, 0, 55)
-scoreLabel.BackgroundTransparency = 1
-scoreLabel.Text = "0 / 1"
-scoreLabel.TextColor3 = Color3.fromRGB(255, 220, 100)
-scoreLabel.TextSize = 28
-scoreLabel.Font = Enum.Font.GothamBold
-scoreLabel.Parent = hudContainer
-
--- Leader display
+-- Leader display (always visible)
 local leaderLabel: TextLabel = Instance.new("TextLabel")
 leaderLabel.Name = "LeaderLabel"
-leaderLabel.Size = UDim2.new(1, 0, 0, 20)
-leaderLabel.Position = UDim2.new(0, 0, 0, 90)
+leaderLabel.Size = UDim2.new(1, 0, 0, 18)
+leaderLabel.Position = UDim2.new(0, 0, 0, 32)
 leaderLabel.BackgroundTransparency = 1
 leaderLabel.Text = "Leader: None (0)"
 leaderLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-leaderLabel.TextSize = 14
+leaderLabel.TextSize = 12
 leaderLabel.Font = Enum.Font.Gotham
 leaderLabel.Parent = hudContainer
 
@@ -140,30 +115,22 @@ local currentMusicId: string = ""
 	Update the HUD display
 ]]
 local function updateHUD(): ()
-	-- Mode label
 	if isActiveMode then
-		modeLabel.Text = "ACTIVE!"
-		modeLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+		-- During active: show score
+		mainLabel.Text = string.format("%d / %d", currentScore, currentGoal)
+
+		-- Color based on progress
+		if currentScore >= currentGoal then
+			mainLabel.TextColor3 = Color3.fromRGB(100, 255, 100) -- Green - goal met
+		elseif timeRemaining < 10 and currentScore < currentGoal then
+			mainLabel.TextColor3 = Color3.fromRGB(255, 100, 100) -- Red - running out of time
+		else
+			mainLabel.TextColor3 = Color3.fromRGB(255, 220, 100) -- Yellow - normal
+		end
 	else
-		modeLabel.Text = "BREAK"
-		modeLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
-	end
-
-	-- Timer
-	local minutes: number = math.floor(timeRemaining / 60)
-	local seconds: number = timeRemaining % 60
-	timerLabel.Text = string.format("%d:%02d", minutes, seconds)
-
-	-- Score
-	scoreLabel.Text = string.format("%d / %d", currentScore, currentGoal)
-
-	-- Color score based on progress
-	if currentScore >= currentGoal then
-		scoreLabel.TextColor3 = Color3.fromRGB(100, 255, 100) -- Green - goal met
-	elseif isActiveMode and timeRemaining < 10 and currentScore < currentGoal then
-		scoreLabel.TextColor3 = Color3.fromRGB(255, 100, 100) -- Red - running out of time
-	else
-		scoreLabel.TextColor3 = Color3.fromRGB(255, 220, 100) -- Yellow - normal
+		-- During break: show BREAK
+		mainLabel.Text = "BREAK"
+		mainLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
 	end
 end
 
@@ -207,7 +174,7 @@ gameStateEvent.OnClientEvent:Connect(function(active: boolean, time: number, act
 	updateHUD()
 
 	-- Start active music 1 second early (when break has 1 second left)
-	if not active and time <= 1 and activeModeEnabled then
+	if not active and time <= 1 then
 		updateMusic(ACTIVE_MUSIC_ID)
 	else
 		updateMusic(activeMusicId)
