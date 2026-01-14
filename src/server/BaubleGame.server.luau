@@ -219,8 +219,8 @@ local function getZapperRange(bestScore: number): number
 	if bestScore < ZAPPER_MIN_SCORE then
 		return 0 -- No zapper yet
 	end
-	-- 5 = 1 stud, 10 = 2 studs, 15 = 3 studs, etc.
-	return math.floor(bestScore / 5)
+	-- 5 = 2 studs, 10 = 4 studs, 15 = 6 studs, etc.
+	return math.floor(bestScore / 5) * 2
 end
 
 --[[

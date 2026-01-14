@@ -161,60 +161,79 @@ end
 	Lightning bolt effect when zapping a bauble
 ]]
 local function playZapEffect(fromPos: Vector3, toPos: Vector3): ()
-	-- Create lightning bolt segments
-	local segments: number = 4
+	-- Create lightning bolt segments - thick and visible
+	local segments: number = 6
 	local boltParts: {Part} = {}
 
 	local direction: Vector3 = toPos - fromPos
 	local distance: number = direction.Magnitude
-	local segmentLength: number = distance / segments
 
-	for i = 1, segments do
-		local startPoint: Vector3 = fromPos + direction * ((i - 1) / segments)
-		local endPoint: Vector3 = fromPos + direction * (i / segments)
+	-- Create main bolt and a couple branch bolts for effect
+	for branch = 1, 3 do
+		local branchOffset = (branch == 1) and Vector3.zero or Vector3.new(
+			(math.random() - 0.5) * 1,
+			(math.random() - 0.5) * 1,
+			(math.random() - 0.5) * 1
+		)
 
-		-- Add random offset for jagged look (except first and last points)
-		if i > 1 then
-			local offset: Vector3 = Vector3.new(
-				(math.random() - 0.5) * 0.5,
-				(math.random() - 0.5) * 0.5,
-				(math.random() - 0.5) * 0.5
-			)
-			startPoint = startPoint + offset
+		for i = 1, segments do
+			local startPoint: Vector3 = fromPos + direction * ((i - 1) / segments) + branchOffset
+			local endPoint: Vector3 = fromPos + direction * (i / segments) + branchOffset
+
+			-- Add random offset for jagged lightning look
+			if i > 1 and i < segments then
+				local offset: Vector3 = Vector3.new(
+					(math.random() - 0.5) * 1.5,
+					(math.random() - 0.5) * 1.5,
+					(math.random() - 0.5) * 1.5
+				)
+				startPoint = startPoint + offset
+			end
+
+			local midPoint: Vector3 = (startPoint + endPoint) / 2
+			local segDir: Vector3 = endPoint - startPoint
+
+			local bolt: Part = Instance.new("Part")
+			bolt.Name = "LightningBolt"
+			-- Main bolt is thicker, branches are thinner
+			local thickness = (branch == 1) and 0.5 or 0.25
+			bolt.Size = Vector3.new(thickness, thickness, segDir.Magnitude)
+			bolt.CFrame = CFrame.lookAt(midPoint, endPoint)
+			bolt.Anchored = true
+			bolt.CanCollide = false
+			bolt.Material = Enum.Material.Neon
+			bolt.Color = Color3.fromRGB(100, 200, 255)
+			bolt.Parent = Workspace
+
+			-- Add point light to main bolt segments
+			if branch == 1 then
+				local light: PointLight = Instance.new("PointLight")
+				light.Color = Color3.fromRGB(150, 220, 255)
+				light.Brightness = 3
+				light.Range = 8
+				light.Parent = bolt
+			end
+
+			table.insert(boltParts, bolt)
 		end
-
-		local midPoint: Vector3 = (startPoint + endPoint) / 2
-		local segDir: Vector3 = endPoint - startPoint
-
-		local bolt: Part = Instance.new("Part")
-		bolt.Name = "LightningBolt"
-		bolt.Size = Vector3.new(0.15, 0.15, segDir.Magnitude)
-		bolt.CFrame = CFrame.lookAt(midPoint, endPoint)
-		bolt.Anchored = true
-		bolt.CanCollide = false
-		bolt.Material = Enum.Material.Neon
-		bolt.Color = Color3.fromRGB(150, 200, 255)
-		bolt.Parent = Workspace
-
-		table.insert(boltParts, bolt)
 	end
 
 	-- Play zap sound
 	hitSound:Play()
 
-	-- Flash effect
-	flashOverlay.BackgroundColor3 = Color3.fromRGB(150, 200, 255)
-	flashOverlay.BackgroundTransparency = 0.7
+	-- Bright flash effect
+	flashOverlay.BackgroundColor3 = Color3.fromRGB(150, 220, 255)
+	flashOverlay.BackgroundTransparency = 0.3
 
 	local flashTween = TweenService:Create(
 		flashOverlay,
-		TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 		{BackgroundTransparency = 1}
 	)
 	flashTween:Play()
 
-	-- Remove lightning after brief moment
-	task.delay(0.1, function()
+	-- Remove lightning after visible moment
+	task.delay(0.2, function()
 		for _, part in ipairs(boltParts) do
 			part:Destroy()
 		end
