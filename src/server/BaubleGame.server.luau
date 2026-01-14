@@ -22,6 +22,12 @@ local ACTIVE_MUSIC_ID: string = "rbxassetid://126431844684249"
 local NORMAL_WALK_SPEED: number = 16
 local ACTIVE_WALK_SPEED: number = 48 -- 3x faster
 
+-- Zapper configuration
+local ZAPPER_MIN_SCORE: number = 10 -- Need 10 best score to unlock zapper
+local ZAPPER_BASE_RANGE: number = 1 -- 1 stud at 10 points
+local ZAPPER_RANGE_INCREMENT: number = 5 -- Every 5 more points = +1 stud
+local ZAPPER_ANGLE: number = 60 -- 60 degrees each side (120 total cone)
+
 -- Create RemoteEvents for client communication
 local eventsFolder: Folder = Instance.new("Folder")
 eventsFolder.Name = "BaubleGameEvents"
@@ -46,6 +52,10 @@ leaderEvent.Parent = eventsFolder
 local playerDiedEvent: RemoteEvent = Instance.new("RemoteEvent")
 playerDiedEvent.Name = "PlayerDied"
 playerDiedEvent.Parent = eventsFolder
+
+local zapEvent: RemoteEvent = Instance.new("RemoteEvent")
+zapEvent.Name = "BaubleZapped"
+zapEvent.Parent = eventsFolder
 
 local getPlayerState: RemoteFunction = Instance.new("RemoteFunction")
 getPlayerState.Name = "GetPlayerState"
@@ -200,6 +210,121 @@ local function setupBaubleDetection(): ()
 					onBaubleTouched(child, player)
 				end
 			end)
+		end
+	end
+end
+
+--[[
+	Get zapper range for a player based on best score
+]]
+local function getZapperRange(bestScore: number): number
+	if bestScore < ZAPPER_MIN_SCORE then
+		return 0 -- No zapper yet
+	end
+	-- 10 = 1 stud, 15 = 2 studs, 20 = 3 studs, etc.
+	return ZAPPER_BASE_RANGE + math.floor((bestScore - ZAPPER_MIN_SCORE) / ZAPPER_RANGE_INCREMENT)
+end
+
+--[[
+	Check if a position is within the zapper cone (120 degrees in front)
+]]
+local function isInZapperCone(playerPosition: Vector3, lookDirection: Vector3, targetPosition: Vector3): boolean
+	local toTarget: Vector3 = (targetPosition - playerPosition).Unit
+	-- Flatten to horizontal plane for angle check
+	local flatLook: Vector3 = Vector3.new(lookDirection.X, 0, lookDirection.Z).Unit
+	local flatToTarget: Vector3 = Vector3.new(toTarget.X, 0, toTarget.Z).Unit
+
+	local dot: number = flatLook:Dot(flatToTarget)
+	local angleRad: number = math.acos(math.clamp(dot, -1, 1))
+	local angleDeg: number = math.deg(angleRad)
+
+	return angleDeg <= ZAPPER_ANGLE
+end
+
+--[[
+	Zap a bauble (called when zapper hits it)
+]]
+local function onBaubleZapped(bauble: Part, player: Player): ()
+	-- Prevent double-counting
+	if bauble:GetAttribute("Collected") then return end
+	bauble:SetAttribute("Collected", true)
+
+	local data = playerData[player]
+	if not data then return end
+
+	-- Only count during active mode
+	if not isActiveMode then return end
+
+	-- Increment score
+	data.currentScore = data.currentScore + 1
+	print("[BaubleGame]", player.Name, "zapped bauble! Score:", data.currentScore, "/", data.goal)
+
+	-- Update best score
+	if data.currentScore > data.bestScore then
+		data.bestScore = data.currentScore
+	end
+
+	-- Send score update to client
+	scoreEvent:FireClient(player, data.currentScore, data.goal)
+
+	-- Send zap event for lightning effect
+	local character = player.Character
+	if character then
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			zapEvent:FireClient(player, hrp.Position, bauble.Position)
+		end
+	end
+
+	-- Remove the bauble
+	bauble:Destroy()
+
+	-- Update leader
+	updateLeader()
+end
+
+--[[
+	Check for baubles to zap for all players
+]]
+local function checkZapper(): ()
+	local baublesFolder = Workspace:FindFirstChild("Baubles")
+	if not baublesFolder then return end
+
+	for player, data in pairs(playerData) do
+		local zapRange: number = getZapperRange(data.bestScore)
+		if zapRange <= 0 then continue end
+
+		local character = player.Character
+		if not character then continue end
+
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if not hrp then continue end
+
+		local playerPos: Vector3 = hrp.Position
+		local lookDir: Vector3 = hrp.CFrame.LookVector
+
+		for _, child in ipairs(baublesFolder:GetChildren()) do
+			if not child:IsA("Part") or child.Name ~= "Bauble" then continue end
+			if child:GetAttribute("Collected") then continue end
+
+			local baublePos: Vector3 = child.Position
+			local distance: number = (baublePos - playerPos).Magnitude
+
+			if distance <= zapRange and isInZapperCone(playerPos, lookDir, baublePos) then
+				onBaubleZapped(child, player)
+			end
+		end
+	end
+end
+
+--[[
+	Zapper loop - runs frequently during active mode
+]]
+local function zapperLoop(): ()
+	while true do
+		task.wait(0.05) -- Check 20 times per second
+		if isActiveMode then
+			checkZapper()
 		end
 	end
 end
@@ -384,3 +509,4 @@ end
 print("[BaubleGame] Initializing bauble collection game...")
 task.defer(setupBaubleDetection)
 task.spawn(gameLoop)
+task.spawn(zapperLoop)

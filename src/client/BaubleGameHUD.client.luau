@@ -11,6 +11,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -27,6 +28,7 @@ local scoreEvent = eventsFolder:WaitForChild("ScoreUpdated")
 local baubleTouchedEvent = eventsFolder:WaitForChild("BaubleTouched")
 local leaderEvent = eventsFolder:WaitForChild("LeaderUpdated")
 local playerDiedEvent = eventsFolder:WaitForChild("PlayerDied")
+local zapEvent = eventsFolder:WaitForChild("BaubleZapped")
 local getPlayerState = eventsFolder:WaitForChild("GetPlayerState")
 
 -- Configuration
@@ -156,6 +158,70 @@ local function playFlashEffect(): ()
 end
 
 --[[
+	Lightning bolt effect when zapping a bauble
+]]
+local function playZapEffect(fromPos: Vector3, toPos: Vector3): ()
+	-- Create lightning bolt segments
+	local segments: number = 4
+	local boltParts: {Part} = {}
+
+	local direction: Vector3 = toPos - fromPos
+	local distance: number = direction.Magnitude
+	local segmentLength: number = distance / segments
+
+	for i = 1, segments do
+		local startPoint: Vector3 = fromPos + direction * ((i - 1) / segments)
+		local endPoint: Vector3 = fromPos + direction * (i / segments)
+
+		-- Add random offset for jagged look (except first and last points)
+		if i > 1 then
+			local offset: Vector3 = Vector3.new(
+				(math.random() - 0.5) * 0.5,
+				(math.random() - 0.5) * 0.5,
+				(math.random() - 0.5) * 0.5
+			)
+			startPoint = startPoint + offset
+		end
+
+		local midPoint: Vector3 = (startPoint + endPoint) / 2
+		local segDir: Vector3 = endPoint - startPoint
+
+		local bolt: Part = Instance.new("Part")
+		bolt.Name = "LightningBolt"
+		bolt.Size = Vector3.new(0.15, 0.15, segDir.Magnitude)
+		bolt.CFrame = CFrame.lookAt(midPoint, endPoint)
+		bolt.Anchored = true
+		bolt.CanCollide = false
+		bolt.Material = Enum.Material.Neon
+		bolt.Color = Color3.fromRGB(150, 200, 255)
+		bolt.Parent = Workspace
+
+		table.insert(boltParts, bolt)
+	end
+
+	-- Play zap sound
+	hitSound:Play()
+
+	-- Flash effect
+	flashOverlay.BackgroundColor3 = Color3.fromRGB(150, 200, 255)
+	flashOverlay.BackgroundTransparency = 0.7
+
+	local flashTween = TweenService:Create(
+		flashOverlay,
+		TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{BackgroundTransparency = 1}
+	)
+	flashTween:Play()
+
+	-- Remove lightning after brief moment
+	task.delay(0.1, function()
+		for _, part in ipairs(boltParts) do
+			part:Destroy()
+		end
+	end)
+end
+
+--[[
 	Switch music based on mode
 ]]
 local function updateMusic(activeMusicId: string?): ()
@@ -193,6 +259,10 @@ end)
 
 baubleTouchedEvent.OnClientEvent:Connect(function(position: Vector3)
 	playFlashEffect()
+end)
+
+zapEvent.OnClientEvent:Connect(function(fromPos: Vector3, toPos: Vector3)
+	playZapEffect(fromPos, toPos)
 end)
 
 leaderEvent.OnClientEvent:Connect(function(leaderName: string, leaderScore: number)
