@@ -146,38 +146,38 @@ local function buildSchoolhouse(): Model
 		baseCFrame * CFrame.new(0, 1.25, 0),
 		COLORS.FLOOR, Enum.Material.Wood)
 
-	-- Walls
+	-- Walls (3 studs thick, expanded outward)
 	-- Front wall (with door)
 	createPart(school, "WallFrontLeft",
-		Vector3.new(halfLength - 3, WALL_HEIGHT, 1.5),
-		baseCFrame * CFrame.new(-halfLength / 2 - 1.5, WALL_HEIGHT / 2 + 1, halfWidth - 0.75),
+		Vector3.new(halfLength - 3, WALL_HEIGHT, 3),
+		baseCFrame * CFrame.new(-halfLength / 2 - 1.5, WALL_HEIGHT / 2 + 1, halfWidth),
 		COLORS.STONE, Enum.Material.Limestone)
 
 	createPart(school, "WallFrontRight",
-		Vector3.new(halfLength - 3, WALL_HEIGHT, 1.5),
-		baseCFrame * CFrame.new(halfLength / 2 + 1.5, WALL_HEIGHT / 2 + 1, halfWidth - 0.75),
+		Vector3.new(halfLength - 3, WALL_HEIGHT, 3),
+		baseCFrame * CFrame.new(halfLength / 2 + 1.5, WALL_HEIGHT / 2 + 1, halfWidth),
 		COLORS.STONE, Enum.Material.Limestone)
 
 	createPart(school, "WallFrontTop",
-		Vector3.new(6, WALL_HEIGHT - 10, 1.5),
-		baseCFrame * CFrame.new(0, WALL_HEIGHT - 4, halfWidth - 0.75),
+		Vector3.new(6, WALL_HEIGHT - 10, 3),
+		baseCFrame * CFrame.new(0, WALL_HEIGHT - 4, halfWidth),
 		COLORS.STONE, Enum.Material.Limestone)
 
 	-- Back wall
 	createPart(school, "WallBack",
-		Vector3.new(BUILDING_LENGTH, WALL_HEIGHT, 1.5),
-		baseCFrame * CFrame.new(0, WALL_HEIGHT / 2 + 1, -halfWidth + 0.75),
+		Vector3.new(BUILDING_LENGTH, WALL_HEIGHT, 3),
+		baseCFrame * CFrame.new(0, WALL_HEIGHT / 2 + 1, -halfWidth),
 		COLORS.STONE, Enum.Material.Limestone)
 
 	-- Side walls
 	createPart(school, "WallLeft",
-		Vector3.new(1.5, WALL_HEIGHT, BUILDING_WIDTH - 1.5),
-		baseCFrame * CFrame.new(-halfLength + 0.75, WALL_HEIGHT / 2 + 1, 0),
+		Vector3.new(3, WALL_HEIGHT, BUILDING_WIDTH),
+		baseCFrame * CFrame.new(-halfLength, WALL_HEIGHT / 2 + 1, 0),
 		COLORS.STONE, Enum.Material.Limestone)
 
 	createPart(school, "WallRight",
-		Vector3.new(1.5, WALL_HEIGHT, BUILDING_WIDTH - 1.5),
-		baseCFrame * CFrame.new(halfLength - 0.75, WALL_HEIGHT / 2 + 1, 0),
+		Vector3.new(3, WALL_HEIGHT, BUILDING_WIDTH),
+		baseCFrame * CFrame.new(halfLength, WALL_HEIGHT / 2 + 1, 0),
 		COLORS.STONE, Enum.Material.Limestone)
 
 	-- Door frame (actual frame with open center)
