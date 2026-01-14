@@ -127,6 +127,10 @@ end
 	Handle bauble touch during active mode
 ]]
 local function onBaubleTouched(bauble: Part, player: Player): ()
+	-- Prevent double-counting from multiple touch events
+	if bauble:GetAttribute("Collected") then return end
+	bauble:SetAttribute("Collected", true)
+
 	local data = playerData[player]
 	if not data then return end
 
