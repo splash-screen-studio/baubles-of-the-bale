@@ -20,7 +20,6 @@ local STARTING_GOAL: number = 1
 local GOAL_DECREASE_ON_DEATH: number = 1
 local ACTIVE_MUSIC_ID: string = "rbxassetid://126431844684249"
 local NORMAL_WALK_SPEED: number = 16
-local ACTIVE_WALK_SPEED: number = 48 -- 3x faster
 
 -- Zapper configuration
 local ZAPPER_MIN_SCORE: number = 5 -- Need 5 best score to unlock zapper
@@ -147,6 +146,28 @@ local function getZapperRange(bestScore: number): number
 end
 
 --[[
+	Get active mode walk speed based on best score
+	0 baubles: 1.5x (24), 5: 2x (32), 10: 2.5x (40), 15: 3x (48), 75+: 4x (64)
+]]
+local function getActiveWalkSpeed(bestScore: number): number
+	if bestScore >= 75 then
+		return 64 -- 4x cap
+	elseif bestScore >= 15 then
+		-- Linear from 48 at 15 to 64 at 75
+		return 48 + (bestScore - 15) * (16 / 60)
+	elseif bestScore >= 10 then
+		-- Linear from 40 at 10 to 48 at 15
+		return 40 + (bestScore - 10) * (8 / 5)
+	elseif bestScore >= 5 then
+		-- Linear from 32 at 5 to 40 at 10
+		return 32 + (bestScore - 5) * (8 / 5)
+	else
+		-- Linear from 24 at 0 to 32 at 5
+		return 24 + bestScore * (8 / 5)
+	end
+end
+
+--[[
 	Handle bauble touch during active mode
 ]]
 local function onBaubleTouched(bauble: Part, player: Player): ()
@@ -170,6 +191,14 @@ local function onBaubleTouched(bauble: Part, player: Player): ()
 		-- Notify client of new zapper range (fired only when bestScore changes)
 		local newRange: number = getZapperRange(data.bestScore)
 		zapperRangeEvent:FireClient(player, newRange)
+		-- Update walk speed based on new best score
+		local character = player.Character
+		if character then
+			local humanoid = character:FindFirstChild("Humanoid")
+			if humanoid then
+				humanoid.WalkSpeed = getActiveWalkSpeed(data.bestScore)
+			end
+		end
 	end
 
 	-- Send score update to client
@@ -270,6 +299,14 @@ local function onBaubleZapped(bauble: Part, player: Player): ()
 		-- Notify client of new zapper range (fired only when bestScore changes)
 		local newRange: number = getZapperRange(data.bestScore)
 		zapperRangeEvent:FireClient(player, newRange)
+		-- Update walk speed based on new best score
+		local char = player.Character
+		if char then
+			local hum = char:FindFirstChild("Humanoid")
+			if hum then
+				hum.WalkSpeed = getActiveWalkSpeed(data.bestScore)
+			end
+		end
 	end
 
 	-- Send score update to client
@@ -382,15 +419,32 @@ end
 	Start active period
 ]]
 --[[
-	Set walk speed for all players
+	Set walk speed for all players (normal speed)
 ]]
-local function setAllPlayersSpeed(speed: number): ()
+local function setAllPlayersNormalSpeed(): ()
 	for _, player in ipairs(Players:GetPlayers()) do
 		local character = player.Character
 		if character then
 			local humanoid = character:FindFirstChild("Humanoid")
 			if humanoid then
-				humanoid.WalkSpeed = speed
+				humanoid.WalkSpeed = NORMAL_WALK_SPEED
+			end
+		end
+	end
+end
+
+--[[
+	Set active walk speed for all players (dynamic based on best score)
+]]
+local function setAllPlayersActiveSpeed(): ()
+	for _, player in ipairs(Players:GetPlayers()) do
+		local data = playerData[player]
+		local bestScore: number = data and data.bestScore or 0
+		local character = player.Character
+		if character then
+			local humanoid = character:FindFirstChild("Humanoid")
+			if humanoid then
+				humanoid.WalkSpeed = getActiveWalkSpeed(bestScore)
 			end
 		end
 	end
@@ -412,8 +466,8 @@ local function startActivePeriod(): ()
 		scoreEvent:FireClient(player, 0, data.goal)
 	end
 
-	-- Speed boost!
-	setAllPlayersSpeed(ACTIVE_WALK_SPEED)
+	-- Speed boost (dynamic based on each player's best score)
+	setAllPlayersActiveSpeed()
 
 	-- Update signs with new messages
 	local updateSignsEvent = ReplicatedStorage:FindFirstChild("UpdateSigns")
@@ -434,7 +488,7 @@ local function startBreakPeriod(): ()
 	timeRemaining = BREAK_DURATION
 
 	-- Reset to normal speed
-	setAllPlayersSpeed(NORMAL_WALK_SPEED)
+	setAllPlayersNormalSpeed()
 
 	-- Notify all clients
 	gameStateEvent:FireAllClients(false, BREAK_DURATION, nil)
@@ -473,7 +527,9 @@ Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function(character)
 		local humanoid = character:WaitForChild("Humanoid")
 		if humanoid then
-			humanoid.WalkSpeed = isActiveMode and ACTIVE_WALK_SPEED or NORMAL_WALK_SPEED
+			local data = playerData[player]
+			local bestScore: number = data and data.bestScore or 0
+			humanoid.WalkSpeed = isActiveMode and getActiveWalkSpeed(bestScore) or NORMAL_WALK_SPEED
 		end
 	end)
 
