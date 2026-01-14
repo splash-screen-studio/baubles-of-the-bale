@@ -364,22 +364,7 @@ local function createEntrance(parent: Instance, baseCFrame: CFrame): ()
 		baseCFrame * CFrame.new(0, NAVE_HEIGHT - (NAVE_HEIGHT - 18)/2, 0),
 		COLORS.STONE)
 
-	-- Door frame
-	createPart(parent, "DoorFrameLeft",
-		Vector3.new(2, 18, WALL_THICKNESS + 2),
-		baseCFrame * CFrame.new(-5, 9, 0),
-		COLORS.STONE_DARK)
-
-	createPart(parent, "DoorFrameRight",
-		Vector3.new(2, 18, WALL_THICKNESS + 2),
-		baseCFrame * CFrame.new(5, 9, 0),
-		COLORS.STONE_DARK)
-
-	-- Arch above door (doors removed for open entry)
-	createPart(parent, "DoorArch",
-		Vector3.new(14, 3, WALL_THICKNESS + 2),
-		baseCFrame * CFrame.new(0, 18, 0),
-		COLORS.STONE_ACCENT)
+	-- Door opening (12 studs wide x 18 studs tall)
 
 	-- Rose window above entrance (sticking out 1 stud outside wall)
 	createPart(parent, "MainRoseWindow",
