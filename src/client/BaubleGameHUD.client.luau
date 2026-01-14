@@ -60,7 +60,7 @@ flashOverlay.Parent = screenGui
 -- Main HUD container (top center, compact)
 local hudContainer: Frame = Instance.new("Frame")
 hudContainer.Name = "HUDContainer"
-hudContainer.Size = UDim2.new(0, 180, 0, 55)
+hudContainer.Size = UDim2.new(0, 180, 0, 58)
 hudContainer.Position = UDim2.new(0.5, -90, 0, 0)
 hudContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 hudContainer.BackgroundTransparency = 0.5
@@ -86,12 +86,12 @@ mainLabel.Parent = hudContainer
 -- Leader display (always visible)
 local leaderLabel: TextLabel = Instance.new("TextLabel")
 leaderLabel.Name = "LeaderLabel"
-leaderLabel.Size = UDim2.new(1, 0, 0, 18)
+leaderLabel.Size = UDim2.new(1, 0, 0, 22)
 leaderLabel.Position = UDim2.new(0, 0, 0, 32)
 leaderLabel.BackgroundTransparency = 1
 leaderLabel.Text = "Leader: None (0)"
 leaderLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-leaderLabel.TextSize = 12
+leaderLabel.TextSize = 18
 leaderLabel.Font = Enum.Font.Gotham
 leaderLabel.Parent = hudContainer
 
