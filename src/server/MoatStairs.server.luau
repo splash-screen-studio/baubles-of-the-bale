@@ -7,10 +7,10 @@
 local Workspace = game:GetService("Workspace")
 
 -- Key positions
-local START_Z: number = -67 -- Where ascending stairs begin
+local START_Z: number = -60 -- Where ascending stairs begin (bottom step)
 local EXTERIOR_WALL_Z: number = -69 -- Top of exterior wall
 local INTERIOR_WALL_Z: number = -87 -- Top of interior wall (island side)
-local X_POS: number = 66
+local X_POS: number = 65
 
 -- Moat reference values
 local WALL_HEIGHT: number = 8
