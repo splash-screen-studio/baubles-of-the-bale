@@ -306,9 +306,11 @@ local function checkZapper(): ()
 			if child:GetAttribute("Collected") then continue end
 
 			local baublePos: Vector3 = child.Position
-			local distance: number = (baublePos - playerPos).Magnitude
+			local baubleRadius: number = child.Size.X / 2 -- Balls are uniform size
+			local distanceToCenter: number = (baublePos - playerPos).Magnitude
+			local distanceToSurface: number = distanceToCenter - baubleRadius
 
-			if distance <= zapRange and isInZapperCone(playerPos, lookDir, baublePos) then
+			if distanceToSurface <= zapRange and isInZapperCone(playerPos, lookDir, baublePos) then
 				onBaubleZapped(child, player)
 			end
 		end
@@ -402,6 +404,12 @@ local function startActivePeriod(): ()
 
 	-- Speed boost!
 	setAllPlayersSpeed(ACTIVE_WALK_SPEED)
+
+	-- Update signs with new messages
+	local updateSignsEvent = ReplicatedStorage:FindFirstChild("UpdateSigns")
+	if updateSignsEvent then
+		updateSignsEvent:Fire()
+	end
 
 	-- Notify all clients
 	gameStateEvent:FireAllClients(true, ACTIVE_DURATION, ACTIVE_MUSIC_ID)

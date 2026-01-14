@@ -378,11 +378,37 @@ local function createSignText(signBoard: Part, text: string, face: Enum.NormalId
 	return surfaceGui
 end
 
+-- Track all sign text labels for updating
+local allSignLabels: {TextLabel} = {}
+
 --[[
-	Gets a random message from the list
+	Gets N unique random messages from the list
 ]]
-local function getRandomMessage(): string
-	return SIGN_MESSAGES[math.random(1, #SIGN_MESSAGES)]
+local function getUniqueMessages(count: number): {string}
+	local available = table.clone(SIGN_MESSAGES)
+	local selected: {string} = {}
+
+	for i = 1, count do
+		if #available == 0 then
+			available = table.clone(SIGN_MESSAGES) -- Reset if we run out
+		end
+		local index = math.random(1, #available)
+		table.insert(selected, available[index])
+		table.remove(available, index)
+	end
+
+	return selected
+end
+
+--[[
+	Updates all sign texts with unique messages
+]]
+local function updateAllSigns(): ()
+	local messages = getUniqueMessages(#allSignLabels)
+	for i, label in ipairs(allSignLabels) do
+		label.Text = messages[i]
+	end
+	print("[Signs] Updated all signs with new messages")
 end
 
 --[[
@@ -401,9 +427,13 @@ local function createSign(position: Vector3, index: number): Model
 	-- Create the sign board (facing origin)
 	local signBoard: Part = createSignBoard(signModel, position, true)
 
-	-- Add different random text to front and back faces
-	createSignText(signBoard, getRandomMessage(), Enum.NormalId.Front)
-	createSignText(signBoard, getRandomMessage(), Enum.NormalId.Back)
+	-- Add text to front and back faces (will be updated with unique messages)
+	local frontGui = createSignText(signBoard, "", Enum.NormalId.Front)
+	local backGui = createSignText(signBoard, "", Enum.NormalId.Back)
+
+	-- Track the text labels
+	table.insert(allSignLabels, frontGui:FindFirstChild("CoordinateText"))
+	table.insert(allSignLabels, backGui:FindFirstChild("CoordinateText"))
 
 	-- Add torches to illuminate both sides
 	createSignTorches(signModel, signBoard)
@@ -416,6 +446,12 @@ local function createSign(position: Vector3, index: number): Model
 
 	return signModel
 end
+
+-- Create BindableEvent for other scripts to trigger sign updates
+local updateSignsEvent: BindableEvent = Instance.new("BindableEvent")
+updateSignsEvent.Name = "UpdateSigns"
+updateSignsEvent.Parent = game:GetService("ReplicatedStorage")
+updateSignsEvent.Event:Connect(updateAllSigns)
 
 --[[
 	Initialize all signs
@@ -434,6 +470,9 @@ local function initializeSigns(): ()
 		sign.Parent = signsFolder
 		print("[Signs] Created sign", index)
 	end
+
+	-- Set initial unique messages
+	updateAllSigns()
 
 	print("[Signs] All signs created successfully!")
 end
