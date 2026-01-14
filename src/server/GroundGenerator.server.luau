@@ -8,10 +8,17 @@
 local Workspace = game:GetService("Workspace")
 
 -- Ground configuration
-local GROUND_SIZE: number = 512
+-- Asymmetric bounds: X is centered, Z extends further negative (toward cathedral)
+local X_MIN: number = -256
+local X_MAX: number = 256
+local Z_MIN: number = -512
+local Z_MAX: number = 256
 local TILE_SIZE: number = 4
 local GROUND_THICKNESS: number = 4
 local GROUND_Y: number = -GROUND_THICKNESS / 2
+
+-- For distance calculations (used by noise functions)
+local GROUND_SIZE: number = math.max(X_MAX - X_MIN, Z_MAX - Z_MIN)
 
 -- Noise seeds for different layers
 local SEED_GRASS: number = math.random(1, 10000)
@@ -204,22 +211,23 @@ end
 ]]
 local function generateGround(): ()
 	print("[GroundGenerator] Generating medieval village ground...")
+	print("[GroundGenerator] Bounds: X[", X_MIN, ",", X_MAX, "] Z[", Z_MIN, ",", Z_MAX, "]")
 
 	-- Create folder for organization
 	local groundFolder: Folder = Instance.new("Folder")
 	groundFolder.Name = "Ground"
 	groundFolder.Parent = Workspace
 
-	-- Calculate tile grid
-	local halfSize: number = GROUND_SIZE / 2
-	local tilesPerSide: number = GROUND_SIZE / TILE_SIZE
+	-- Calculate tile counts for each axis
+	local xTiles: number = (X_MAX - X_MIN) / TILE_SIZE
+	local zTiles: number = (Z_MAX - Z_MIN) / TILE_SIZE
 	local tilesCreated: number = 0
 
 	-- Generate tiles
-	for xIndex = 0, tilesPerSide - 1 do
-		for zIndex = 0, tilesPerSide - 1 do
-			local x: number = -halfSize + (xIndex * TILE_SIZE) + (TILE_SIZE / 2)
-			local z: number = -halfSize + (zIndex * TILE_SIZE) + (TILE_SIZE / 2)
+	for xIndex = 0, xTiles - 1 do
+		for zIndex = 0, zTiles - 1 do
+			local x: number = X_MIN + (xIndex * TILE_SIZE) + (TILE_SIZE / 2)
+			local z: number = Z_MIN + (zIndex * TILE_SIZE) + (TILE_SIZE / 2)
 
 			createTile(groundFolder, x, z)
 			tilesCreated += 1
