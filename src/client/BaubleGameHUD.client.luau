@@ -98,7 +98,7 @@ leaderLabel.Parent = hudContainer
 -- Music player
 local musicPlayer: Sound = Instance.new("Sound")
 musicPlayer.Name = "BaubleGameMusic"
-musicPlayer.Volume = 1.0 -- 100% volume
+musicPlayer.Volume = 0.25 -- Start with break volume
 musicPlayer.Looped = true
 musicPlayer.Parent = SoundService
 
@@ -164,6 +164,8 @@ local function updateMusic(activeMusicId: string?): ()
 	if targetId ~= currentMusicId then
 		currentMusicId = targetId
 		musicPlayer.SoundId = targetId
+		-- Break music at 25%, active music at 75%
+		musicPlayer.Volume = (targetId == ACTIVE_MUSIC_ID) and 0.75 or 0.25
 		musicPlayer:Play()
 		print("[BaubleGameHUD] Music changed to", targetId)
 	end
