@@ -106,8 +106,8 @@ local function updateLeader(): ()
 	local bestScore: number = 0
 
 	for player, data in pairs(playerData) do
-		if data.currentScore > bestScore then
-			bestScore = data.currentScore
+		if data.bestScore > bestScore then
+			bestScore = data.bestScore
 			bestPlayer = player
 		end
 	end
@@ -219,8 +219,8 @@ local function endActivePeriod(): ()
 			-- Failed - player dies
 			print("[BaubleGame]", player.Name, "failed with", data.currentScore, "/", data.goal)
 
-			-- Decrease goal (minimum 1)
-			data.goal = math.max(STARTING_GOAL, data.goal - GOAL_DECREASE_ON_DEATH)
+			-- New goal is one less than what they scored this run (minimum 1)
+			data.goal = math.max(STARTING_GOAL, data.currentScore - 1)
 
 			-- Kill the player
 			local character = player.Character
