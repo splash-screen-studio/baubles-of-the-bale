@@ -23,9 +23,7 @@ local NORMAL_WALK_SPEED: number = 16
 local ACTIVE_WALK_SPEED: number = 48 -- 3x faster
 
 -- Zapper configuration
-local ZAPPER_MIN_SCORE: number = 10 -- Need 10 best score to unlock zapper
-local ZAPPER_BASE_RANGE: number = 1 -- 1 stud at 10 points
-local ZAPPER_RANGE_INCREMENT: number = 5 -- Every 5 more points = +1 stud
+local ZAPPER_MIN_SCORE: number = 5 -- Need 5 best score to unlock zapper
 local ZAPPER_ANGLE: number = 60 -- 60 degrees each side (120 total cone)
 
 -- Create RemoteEvents for client communication
@@ -221,8 +219,8 @@ local function getZapperRange(bestScore: number): number
 	if bestScore < ZAPPER_MIN_SCORE then
 		return 0 -- No zapper yet
 	end
-	-- 10 = 1 stud, 15 = 2 studs, 20 = 3 studs, etc.
-	return ZAPPER_BASE_RANGE + math.floor((bestScore - ZAPPER_MIN_SCORE) / ZAPPER_RANGE_INCREMENT)
+	-- 5 = 1 stud, 10 = 2 studs, 15 = 3 studs, etc.
+	return math.floor(bestScore / 5)
 end
 
 --[[
