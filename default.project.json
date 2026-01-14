@@ -37,12 +37,14 @@
         "$className": "SpawnLocation",
         "$properties": {
           "Anchored": true,
-          "Position": [0, 3, 100],
-          "Size": [6, 1, 6],
-          "Transparency": 1,
+          "Position": [0, 1, 100],
+          "Size": [8, 1, 8],
+          "Transparency": 0,
           "Neutral": true,
           "AllowTeamChangeOnTouch": false,
-          "Enabled": true
+          "Enabled": true,
+          "Material": "Wood",
+          "Color": [0.545, 0.353, 0.169]
         }
       }
     },

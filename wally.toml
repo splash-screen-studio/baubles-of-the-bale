@@ -9,6 +9,7 @@ Knit = "sleitnick/knit@1.6.0"
 Roact = "roblox/roact@1.4.4"
 Promise = "evaera/promise@4.0.0"
 Trove = "sleitnick/trove@1.1.0"
+TestEZ = "roblox/testez@0.4.1"
 
 [server-dependencies]
 ProfileService = "tazmondo/profileservice@1.0.6"
