@@ -393,12 +393,17 @@ local function checkZapper(): number
 		local lookDir: Vector3 = hrp.CFrame.LookVector
 		local zapsThisBurst: number = 0
 
+		local ZAPPER_MAX_Y: number = 12 -- Max height above player
+
 		for _, child in ipairs(baublesFolder:GetChildren()) do
 			if zapsThisBurst >= ZAPS_PER_BURST then break end
 			if not child:IsA("Part") or child.Name ~= "Bauble" then continue end
 			if child:GetAttribute("Collected") then continue end
 
 			local baublePos: Vector3 = child.Position
+			local yAbovePlayer: number = baublePos.Y - playerPos.Y
+			if yAbovePlayer > ZAPPER_MAX_Y then continue end
+
 			local baubleRadius: number = child.Size.X / 2
 			local distanceToCenter: number = (baublePos - playerPos).Magnitude
 			local distanceToSurface: number = distanceToCenter - baubleRadius
