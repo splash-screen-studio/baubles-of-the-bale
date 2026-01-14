@@ -180,17 +180,11 @@ local function buildSchoolhouse(): Model
 		baseCFrame * CFrame.new(halfLength - 0.75, WALL_HEIGHT / 2 + 1, 0),
 		COLORS.STONE, Enum.Material.Limestone)
 
-	-- Door frame
+	-- Door frame (open doorway)
 	createPart(school, "DoorFrame",
 		Vector3.new(6, 10, 2),
 		baseCFrame * CFrame.new(0, 6, halfWidth - 0.5),
 		COLORS.STONE_DARK, Enum.Material.Cobblestone)
-
-	-- Door
-	createPart(school, "Door",
-		Vector3.new(4, 8, 0.8),
-		baseCFrame * CFrame.new(0, 5, halfWidth + 0.5),
-		COLORS.WOOD_DARK)
 
 	-- Windows (sides)
 	for i = -1, 1, 2 do
