@@ -158,6 +158,13 @@ musicPlayer.Volume = 1.0 -- 100% volume
 musicPlayer.Looped = true
 musicPlayer.Parent = SoundService
 
+-- Loud hit sound effect
+local hitSound: Sound = Instance.new("Sound")
+hitSound.Name = "BaubleHitSound"
+hitSound.SoundId = "rbxassetid://9125402735" -- Loud pop/impact sound
+hitSound.Volume = 1.0
+hitSound.Parent = SoundService
+
 local currentMusicId: string = ""
 
 --[[
@@ -195,17 +202,22 @@ local function updateHUD(): ()
 end
 
 --[[
-	Flash effect when collecting a bauble
+	Flash effect and sound when collecting a bauble
 ]]
 local function playFlashEffect(): ()
-	flashOverlay.BackgroundTransparency = 0.7
+	-- Bright white flash
+	flashOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	flashOverlay.BackgroundTransparency = 0.3 -- Much brighter (70% visible)
 
 	local tween = TweenService:Create(
 		flashOverlay,
-		TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 		{BackgroundTransparency = 1}
 	)
 	tween:Play()
+
+	-- Loud sound effect
+	hitSound:Play()
 end
 
 --[[
