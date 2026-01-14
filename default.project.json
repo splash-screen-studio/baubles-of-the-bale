@@ -48,15 +48,16 @@
     },
     "Lighting": {
       "$properties": {
-        "Ambient": [
-          0,
-          0,
-          0
-        ],
-        "Brightness": 2,
+        "Ambient": [0.3, 0.25, 0.35],
+        "OutdoorAmbient": [0.4, 0.35, 0.5],
+        "Brightness": 1.5,
+        "ClockTime": 18.5,
+        "GeographicLatitude": 45,
         "GlobalShadows": true,
         "Outlines": false,
-        "Technology": "Voxel"
+        "Technology": "ShadowMap",
+        "EnvironmentDiffuseScale": 1,
+        "EnvironmentSpecularScale": 1
       }
     },
     "SoundService": {
