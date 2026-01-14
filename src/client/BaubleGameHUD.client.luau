@@ -9,6 +9,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
@@ -29,6 +30,7 @@ local baubleTouchedEvent = eventsFolder:WaitForChild("BaubleTouched")
 local leaderEvent = eventsFolder:WaitForChild("LeaderUpdated")
 local playerDiedEvent = eventsFolder:WaitForChild("PlayerDied")
 local zapEvent = eventsFolder:WaitForChild("BaubleZapped")
+local zapperRangeEvent = eventsFolder:WaitForChild("ZapperRangeUpdated")
 local getPlayerState = eventsFolder:WaitForChild("GetPlayerState")
 
 -- Configuration
@@ -40,6 +42,12 @@ local isActiveMode: boolean = false
 local currentScore: number = 0
 local currentGoal: number = 1
 local timeRemaining: number = 0
+local zapperRange: number = 0
+
+-- Zapper beam parts
+local leftBeam: Part? = nil
+local rightBeam: Part? = nil
+local ZAPPER_ANGLE: number = 60 -- degrees from center
 
 -- Create the main ScreenGui
 local screenGui: ScreenGui = Instance.new("ScreenGui")
@@ -121,6 +129,94 @@ hitSound.Parent = SoundService
 
 local currentlyActive: boolean = false
 local CROSSFADE_TIME: number = 0.5
+
+--[[
+	Create or update the zapper beam effect
+]]
+local function createZapperBeams(): ()
+	-- Remove old beams
+	if leftBeam then leftBeam:Destroy() end
+	if rightBeam then rightBeam:Destroy() end
+
+	if zapperRange <= 0 then
+		leftBeam = nil
+		rightBeam = nil
+		return
+	end
+
+	-- Create left beam
+	leftBeam = Instance.new("Part")
+	leftBeam.Name = "ZapperBeamLeft"
+	leftBeam.Size = Vector3.new(0.3, 0.3, zapperRange)
+	leftBeam.Anchored = true
+	leftBeam.CanCollide = false
+	leftBeam.Material = Enum.Material.Neon
+	leftBeam.Color = Color3.fromRGB(100, 180, 255)
+	leftBeam.Transparency = 0.4
+	leftBeam.CastShadow = false
+	leftBeam.Parent = Workspace
+
+	-- Add glow effect
+	local leftLight: PointLight = Instance.new("PointLight")
+	leftLight.Color = Color3.fromRGB(100, 180, 255)
+	leftLight.Brightness = 1
+	leftLight.Range = 4
+	leftLight.Parent = leftBeam
+
+	-- Create right beam
+	rightBeam = Instance.new("Part")
+	rightBeam.Name = "ZapperBeamRight"
+	rightBeam.Size = Vector3.new(0.3, 0.3, zapperRange)
+	rightBeam.Anchored = true
+	rightBeam.CanCollide = false
+	rightBeam.Material = Enum.Material.Neon
+	rightBeam.Color = Color3.fromRGB(100, 180, 255)
+	rightBeam.Transparency = 0.4
+	rightBeam.CastShadow = false
+	rightBeam.Parent = Workspace
+
+	local rightLight: PointLight = Instance.new("PointLight")
+	rightLight.Color = Color3.fromRGB(100, 180, 255)
+	rightLight.Brightness = 1
+	rightLight.Range = 4
+	rightLight.Parent = rightBeam
+end
+
+--[[
+	Update beam positions based on player look direction
+]]
+local function updateZapperBeams(): ()
+	if not leftBeam or not rightBeam then return end
+	if zapperRange <= 0 then return end
+
+	local character = player.Character
+	if not character then return end
+
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	local pos: Vector3 = hrp.Position
+	local lookCFrame: CFrame = hrp.CFrame
+
+	-- Calculate left beam direction (60 degrees left)
+	local leftAngle: number = math.rad(ZAPPER_ANGLE)
+	local leftDir: CFrame = lookCFrame * CFrame.Angles(0, leftAngle, 0)
+	local leftEnd: Vector3 = pos + leftDir.LookVector * zapperRange
+	local leftMid: Vector3 = (pos + leftEnd) / 2
+	leftBeam.Size = Vector3.new(0.3, 0.3, zapperRange)
+	leftBeam.CFrame = CFrame.lookAt(leftMid, leftEnd)
+
+	-- Calculate right beam direction (60 degrees right)
+	local rightAngle: number = math.rad(-ZAPPER_ANGLE)
+	local rightDir: CFrame = lookCFrame * CFrame.Angles(0, rightAngle, 0)
+	local rightEnd: Vector3 = pos + rightDir.LookVector * zapperRange
+	local rightMid: Vector3 = (pos + rightEnd) / 2
+	rightBeam.Size = Vector3.new(0.3, 0.3, zapperRange)
+	rightBeam.CFrame = CFrame.lookAt(rightMid, rightEnd)
+end
+
+-- Update beams every frame
+RunService.RenderStepped:Connect(updateZapperBeams)
 
 --[[
 	Update the HUD display
@@ -308,6 +404,12 @@ zapEvent.OnClientEvent:Connect(function(fromPos: Vector3, toPos: Vector3)
 	playZapEffect(fromPos, toPos)
 end)
 
+zapperRangeEvent.OnClientEvent:Connect(function(newRange: number)
+	print("[BaubleGameHUD] Zapper range updated to", newRange)
+	zapperRange = newRange
+	createZapperBeams()
+end)
+
 leaderEvent.OnClientEvent:Connect(function(leaderName: string, leaderScore: number)
 	print("[BaubleGameHUD] Leader event received:", leaderName, leaderScore)
 	leaderLabel.Text = string.format("Leader: %s (%d)", leaderName, leaderScore)
@@ -347,10 +449,16 @@ if success and state then
 	timeRemaining = state.timeRemaining
 	currentScore = state.currentScore
 	currentGoal = state.goal
+	zapperRange = state.zapperRange or 0
 
-	print("[BaubleGameHUD] Got state - score:", currentScore, "goal:", currentGoal)
+	print("[BaubleGameHUD] Got state - score:", currentScore, "goal:", currentGoal, "zapperRange:", zapperRange)
 
 	leaderLabel.Text = string.format("Leader: %s (%d)", state.leaderName, state.leaderScore)
+
+	-- Create zapper beams if player has zapper
+	if zapperRange > 0 then
+		createZapperBeams()
+	end
 else
 	warn("[BaubleGameHUD] Failed to get initial state:", state)
 end

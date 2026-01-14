@@ -55,6 +55,10 @@ local zapEvent: RemoteEvent = Instance.new("RemoteEvent")
 zapEvent.Name = "BaubleZapped"
 zapEvent.Parent = eventsFolder
 
+local zapperRangeEvent: RemoteEvent = Instance.new("RemoteEvent")
+zapperRangeEvent.Name = "ZapperRangeUpdated"
+zapperRangeEvent.Parent = eventsFolder
+
 local getPlayerState: RemoteFunction = Instance.new("RemoteFunction")
 getPlayerState.Name = "GetPlayerState"
 getPlayerState.Parent = eventsFolder
@@ -149,9 +153,14 @@ local function onBaubleTouched(bauble: Part, player: Player): ()
 	data.currentScore = data.currentScore + 1
 	print("[BaubleGame]", player.Name, "collected bauble! Score:", data.currentScore, "/", data.goal)
 
-	-- Update best score
+	-- Update best score and notify client of zapper range change
+	local oldBest = data.bestScore
 	if data.currentScore > data.bestScore then
 		data.bestScore = data.currentScore
+		local newRange = getZapperRange(data.bestScore)
+		if newRange ~= getZapperRange(oldBest) then
+			zapperRangeEvent:FireClient(player, newRange)
+		end
 	end
 
 	-- Send score update to client
@@ -257,9 +266,14 @@ local function onBaubleZapped(bauble: Part, player: Player): ()
 	data.currentScore = data.currentScore + 1
 	print("[BaubleGame]", player.Name, "zapped bauble! Score:", data.currentScore, "/", data.goal)
 
-	-- Update best score
+	-- Update best score and notify client of zapper range change
+	local oldBest = data.bestScore
 	if data.currentScore > data.bestScore then
 		data.bestScore = data.currentScore
+		local newRange = getZapperRange(data.bestScore)
+		if newRange ~= getZapperRange(oldBest) then
+			zapperRangeEvent:FireClient(player, newRange)
+		end
 	end
 
 	-- Send score update to client
@@ -508,6 +522,7 @@ getPlayerState.OnServerInvoke = function(player: Player)
 		goal = data.goal,
 		leaderName = leaderName,
 		leaderScore = currentLeaderScore,
+		zapperRange = getZapperRange(data.bestScore),
 	}
 end
 
