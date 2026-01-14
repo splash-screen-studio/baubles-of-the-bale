@@ -183,7 +183,6 @@ local function onBaubleTouched(bauble: Part, player: Player): ()
 
 	-- Increment score
 	data.currentScore = data.currentScore + 1
-	print("[BaubleGame]", player.Name, "collected bauble! Score:", data.currentScore, "/", data.goal)
 
 	-- Update best score
 	if data.currentScore > data.bestScore then
@@ -297,7 +296,6 @@ local function onBaubleZapped(bauble: Part, player: Player): ()
 
 	-- Increment score
 	data.currentScore = data.currentScore + 1
-	print("[BaubleGame]", player.Name, "zapped bauble! Score:", data.currentScore, "/", data.goal)
 
 	-- Update best score
 	if data.currentScore > data.bestScore then
@@ -341,11 +339,15 @@ local function onBaubleZapped(bauble: Part, player: Player): ()
 end
 
 --[[
-	Check for baubles to zap for all players
+	Check for baubles to zap for all players (burst limited)
 ]]
-local function checkZapper(): ()
+local ZAPS_PER_BURST: number = 6
+
+local function checkZapper(): number
 	local baublesFolder = Workspace:FindFirstChild("Baubles")
-	if not baublesFolder then return end
+	if not baublesFolder then return 0 end
+
+	local totalZapped: number = 0
 
 	for player, data in pairs(playerData) do
 		local zapRange: number = getZapperRange(data.bestScore)
@@ -359,31 +361,45 @@ local function checkZapper(): ()
 
 		local playerPos: Vector3 = hrp.Position
 		local lookDir: Vector3 = hrp.CFrame.LookVector
+		local zapsThisBurst: number = 0
 
 		for _, child in ipairs(baublesFolder:GetChildren()) do
+			if zapsThisBurst >= ZAPS_PER_BURST then break end
 			if not child:IsA("Part") or child.Name ~= "Bauble" then continue end
 			if child:GetAttribute("Collected") then continue end
 
 			local baublePos: Vector3 = child.Position
-			local baubleRadius: number = child.Size.X / 2 -- Balls are uniform size
+			local baubleRadius: number = child.Size.X / 2
 			local distanceToCenter: number = (baublePos - playerPos).Magnitude
 			local distanceToSurface: number = distanceToCenter - baubleRadius
 
 			if distanceToSurface <= zapRange and isInZapperCone(playerPos, lookDir, baublePos) then
 				onBaubleZapped(child, player)
+				zapsThisBurst = zapsThisBurst + 1
+				totalZapped = totalZapped + 1
 			end
 		end
 	end
+
+	return totalZapped
 end
 
 --[[
-	Zapper loop - runs frequently during active mode
+	Zapper loop - burst mode with brief pauses
 ]]
 local function zapperLoop(): ()
 	while true do
-		task.wait(0.05) -- Check 20 times per second
 		if isActiveMode then
-			checkZapper()
+			local zapped: number = checkZapper()
+			if zapped > 0 then
+				-- Brief pause after zapping to give computer a break
+				task.wait(0.08)
+			else
+				-- Normal check rate when nothing to zap
+				task.wait(0.1)
+			end
+		else
+			task.wait(0.1)
 		end
 	end
 end
