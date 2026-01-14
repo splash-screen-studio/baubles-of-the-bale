@@ -162,6 +162,19 @@ local function getZapperRange(bestScore: number): number
 end
 
 --[[
+	Get spawn count for zapped baubles based on best score
+	Starts at 2, increases with dampening, approaches ~14 (7x) at high scores
+]]
+local function getZapSpawnCount(bestScore: number): number
+	if bestScore < 5 then return 2 end
+
+	-- Dampening formula: 2 + log-ish growth that approaches ~12 extra (14 total)
+	-- At score 5: 2, score 20: ~4, score 50: ~7, score 100: ~10, asymptote ~14
+	local extra: number = 12 * (1 - 1 / (1 + (bestScore - 5) / 30))
+	return 2 + math.floor(extra)
+end
+
+--[[
 	Get active mode walk speed based on best score
 	0 baubles: 1.5x (24), 5: 2x (32), 10: 2.5x (40), 15: 3x (48), 75+: 4x (64)
 ]]
@@ -344,10 +357,11 @@ local function onBaubleZapped(bauble: Part, player: Player): ()
 	-- Remove the bauble
 	bauble:Destroy()
 
-	-- Spawn 2 replacement baubles (2-for-1 zap bonus)
+	-- Spawn replacement baubles (scales with score, dampens toward ~14)
 	local spawnEvent = ReplicatedStorage:FindFirstChild("SpawnBaubles")
 	if spawnEvent then
-		spawnEvent:Fire(2, data.bestScore)
+		local spawnCount: number = getZapSpawnCount(data.bestScore)
+		spawnEvent:Fire(spawnCount, data.bestScore)
 	end
 
 	-- Update leader
