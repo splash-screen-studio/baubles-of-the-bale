@@ -136,13 +136,29 @@ end
 
 --[[
 	Get zapper range for a player based on best score
+	Dampening curve: starts strong, eventually +1 stud per 5 baubles
+	5=8, 10=16, 15=23, 20=30, 25=36, 30=42, ... 80+=adds 1 per 5
 ]]
 local function getZapperRange(bestScore: number): number
 	if bestScore < ZAPPER_MIN_SCORE then
 		return 0 -- No zapper yet
 	end
-	-- 5 = 8 studs, 10 = 16 studs, 15 = 24 studs, 20 = 32 studs, etc.
-	return math.floor(bestScore / 5) * 8
+
+	local levels: number = math.floor(bestScore / 5)
+	local studs: number = 0
+
+	for k = 1, levels do
+		local increment: number
+		if k <= 2 then
+			increment = 8 -- First two levels: +8 each
+		else
+			-- Decreasing increment: 7, 7, 6, 6, 5, 5... down to 1
+			increment = math.max(1, math.floor(7.5 - 0.5 * (k - 3)))
+		end
+		studs = studs + increment
+	end
+
+	return studs
 end
 
 --[[
