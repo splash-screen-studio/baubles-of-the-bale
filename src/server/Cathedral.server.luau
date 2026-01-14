@@ -375,18 +375,7 @@ local function createEntrance(parent: Instance, baseCFrame: CFrame): ()
 		baseCFrame * CFrame.new(5, 9, 0),
 		COLORS.STONE_DARK)
 
-	-- Doors
-	createPart(parent, "DoorLeft",
-		Vector3.new(4, 16, 1),
-		baseCFrame * CFrame.new(-2.5, 8, WALL_THICKNESS/2 + 0.5),
-		COLORS.WOOD_DARK, Enum.Material.Wood)
-
-	createPart(parent, "DoorRight",
-		Vector3.new(4, 16, 1),
-		baseCFrame * CFrame.new(2.5, 8, WALL_THICKNESS/2 + 0.5),
-		COLORS.WOOD_DARK, Enum.Material.Wood)
-
-	-- Arch above door
+	-- Arch above door (doors removed for open entry)
 	createPart(parent, "DoorArch",
 		Vector3.new(14, 3, WALL_THICKNESS + 2),
 		baseCFrame * CFrame.new(0, 18, 0),
