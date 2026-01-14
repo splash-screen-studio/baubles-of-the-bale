@@ -1,19 +1,122 @@
 --[[
 	CoordinateSigns.server.luau
 
-	Creates medieval-style coordinate signs at key positions around the map.
-	Each sign displays its X,Z position and faces toward the origin (0,0).
+	Creates medieval-style signs with funny gen-z messages.
+	Each side of the sign shows a different random message.
 ]]
 
 local Workspace = game:GetService("Workspace")
 
--- Configuration for sign positions
--- Each entry: { position = Vector3, text = string }
-local SIGN_DATA: {{position: Vector3, text: string}} = {
-	{ position = Vector3.new(-60, 0, 0), text = "X: -60\nZ: 0" },
-	{ position = Vector3.new(60, 0, 0), text = "X: 60\nZ: 0" },
-	{ position = Vector3.new(0, 0, -60), text = "X: 0\nZ: -60" },
-	{ position = Vector3.new(0, 0, 60), text = "X: 0\nZ: 60" },
+-- Sign positions
+local SIGN_POSITIONS: {Vector3} = {
+	Vector3.new(-60, 0, 0),
+	Vector3.new(60, 0, 0),
+	Vector3.new(0, 0, -60),
+	Vector3.new(0, 0, 60),
+}
+
+-- 100 funny gen-z semi-helpful messages
+local SIGN_MESSAGES: {string} = {
+	"no cap\nthese baubles\ngo hard",
+	"touch grass\n(and baubles)",
+	"it's giving\nmedieval vibes",
+	"slay those\nbaubles bestie",
+	"lowkey a\nvibe here",
+	"highkey\nneed baubles",
+	"this hits\ndifferent fr",
+	"main character\nenergy only",
+	"understood the\nassignment",
+	"catch baubles\nnot feelings",
+	"baubles are\nbussin fr fr",
+	"stay hydrated\ncatch orbs",
+	"no thoughts\njust baubles",
+	"living my\nbest life rn",
+	"rent free in\nmy head",
+	"it's the\nbaubles for me",
+	"sending you\ngood vibes",
+	"that's sus\nbut okay",
+	"periodt.\nget baubles",
+	"wig snatched\nby orbs",
+	"big yikes\nif you miss",
+	"vibe check\npassed",
+	"sheesh\nthose baubles",
+	"caught in\n4k collecting",
+	"W player\nright here",
+	"L if you\ndon't collect",
+	"based and\nbauble-pilled",
+	"sigma grindset\nbauble mode",
+	"skill issue\nif you lose",
+	"cope and\nseethe (or win)",
+	"touch baubles\nnot grass",
+	"fr fr\non god",
+	"deadass\nneed orbs",
+	"bet you\ncan't catch em",
+	"say less\njust collect",
+	"we move\ndifferent here",
+	"built different\nbauble gang",
+	"hits harder\nthan expected",
+	"valid af\nbauble hunter",
+	"ate and left\nno crumbs",
+	"mother is\nmothering",
+	"giving what\nneeded giving",
+	"not the\nflop era",
+	"served looks\nand baubles",
+	"iconic behavior\nonly",
+	"rent is due\n(in baubles)",
+	"delulu is\nthe solulu",
+	"unhinged but\nmake it work",
+	"core memory\nloading...",
+	"roman empire\nbut baubles",
+	"let him\ncook (baubles)",
+	"banger alert\nup ahead",
+	"certified\nhood classic",
+	"real ones\nknow",
+	"iykyk\n(baubles)",
+	"understood\nthe vision",
+	"galaxy brain\nbauble plays",
+	"speedrun this\nno cap",
+	"diff is\ncrazy rn",
+	"gg ez\nbauble diff",
+	"ratio + L +\ncatch orbs",
+	"copium levels\nrising",
+	"hopium for\nmore baubles",
+	"down bad\nfor orbs",
+	"astronomically\ndown bad",
+	"absolutely\nunhinged",
+	"chaotic good\nenergy",
+	"menace to\nsociety",
+	"threat to\nsociety arc",
+	"main quest:\nbaubles",
+	"side quest:\nmore baubles",
+	"NPC behavior\ndetected",
+	"protagonist\nmoment",
+	"anime moment\nloading",
+	"this goes\nhard actually",
+	"screenshot\nworthy tbh",
+	"fire emoji\nfire emoji",
+	"skull emoji\nvibes",
+	"crying emoji\nbut happy",
+	"peak fiction\nright here",
+	"peak gaming\nmoment",
+	"goated with\nthe sauce",
+	"drip too\nhard",
+	"clean af\nbauble game",
+	"immaculate\nvibes only",
+	"elite tier\ngameplay",
+	"cracked at\nbaubles fr",
+	"him/her:\nbauble demon",
+	"different breed\nof player",
+	"woke up and\nchose baubles",
+	"violence\n(the baubles)",
+	"war crimes\n(collecting)",
+	"menacingly\napproaching",
+	"ominously\nlooming",
+	"feral mode\nactivated",
+	"unalive the\ncompetition",
+	"bestie please\ncollect",
+	"snatched\nevery orb",
+	"era: bauble\ncollector",
+	"hot girl\nbauble summer",
 }
 
 -- Medieval color palette
@@ -276,24 +379,31 @@ local function createSignText(signBoard: Part, text: string, face: Enum.NormalId
 end
 
 --[[
-	Creates a complete medieval coordinate sign at the specified position
+	Gets a random message from the list
 ]]
-local function createCoordinateSign(signData: {position: Vector3, text: string}): Model
+local function getRandomMessage(): string
+	return SIGN_MESSAGES[math.random(1, #SIGN_MESSAGES)]
+end
+
+--[[
+	Creates a complete medieval sign at the specified position
+]]
+local function createSign(position: Vector3, index: number): Model
 	local signModel: Model = Instance.new("Model")
-	signModel.Name = "CoordinateSign_" .. signData.text:gsub("\n", "_"):gsub(" ", ""):gsub(":", "")
+	signModel.Name = "FunnySign_" .. index
 
 	-- Create the wooden post
-	local post: Part = createPost(signModel, signData.position)
+	local post: Part = createPost(signModel, position)
 
 	-- Create decorative cap
-	createPostCap(signModel, signData.position)
+	createPostCap(signModel, position)
 
 	-- Create the sign board (facing origin)
-	local signBoard: Part = createSignBoard(signModel, signData.position, true)
+	local signBoard: Part = createSignBoard(signModel, position, true)
 
-	-- Add text to both front and back faces
-	createSignText(signBoard, signData.text, Enum.NormalId.Front)
-	createSignText(signBoard, signData.text, Enum.NormalId.Back)
+	-- Add different random text to front and back faces
+	createSignText(signBoard, getRandomMessage(), Enum.NormalId.Front)
+	createSignText(signBoard, getRandomMessage(), Enum.NormalId.Back)
 
 	-- Add torches to illuminate both sides
 	createSignTorches(signModel, signBoard)
@@ -308,24 +418,24 @@ local function createCoordinateSign(signData: {position: Vector3, text: string})
 end
 
 --[[
-	Initialize all coordinate signs
+	Initialize all signs
 ]]
 local function initializeSigns(): ()
-	print("[CoordinateSigns] Creating medieval coordinate signs...")
+	print("[Signs] Creating funny medieval signs...")
 
 	-- Create a folder to organize signs
 	local signsFolder: Folder = Instance.new("Folder")
-	signsFolder.Name = "CoordinateSigns"
+	signsFolder.Name = "FunnySigns"
 	signsFolder.Parent = Workspace
 
 	-- Create each sign
-	for _, signData in SIGN_DATA do
-		local sign: Model = createCoordinateSign(signData)
+	for index, position in ipairs(SIGN_POSITIONS) do
+		local sign: Model = createSign(position, index)
 		sign.Parent = signsFolder
-		print("[CoordinateSigns] Created sign at", signData.position)
+		print("[Signs] Created sign", index)
 	end
 
-	print("[CoordinateSigns] All signs created successfully!")
+	print("[Signs] All signs created successfully!")
 end
 
 -- Run initialization
