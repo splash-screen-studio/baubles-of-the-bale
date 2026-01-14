@@ -215,16 +215,16 @@ local function createNave(parent: Instance, baseCFrame: CFrame): ()
 	for i = 1, windowCount do
 		local zPos: number = -windowSpacing * i
 
-		-- Left windows
+		-- Left windows (sticking out 1 stud outside wall)
 		createPart(parent, "WindowLeft" .. i,
-			Vector3.new(1, 12, 4),
-			baseCFrame * CFrame.new(-NAVE_WIDTH/2 + WALL_THICKNESS/2, NAVE_HEIGHT/2 + 5, zPos),
+			Vector3.new(3, 12, 4),
+			baseCFrame * CFrame.new(-NAVE_WIDTH/2 - 0.5, NAVE_HEIGHT/2 + 5, zPos),
 			COLORS.WINDOW, Enum.Material.Neon)
 
-		-- Right windows
+		-- Right windows (sticking out 1 stud outside wall)
 		createPart(parent, "WindowRight" .. i,
-			Vector3.new(1, 12, 4),
-			baseCFrame * CFrame.new(NAVE_WIDTH/2 - WALL_THICKNESS/2, NAVE_HEIGHT/2 + 5, zPos),
+			Vector3.new(3, 12, 4),
+			baseCFrame * CFrame.new(NAVE_WIDTH/2 + 0.5, NAVE_HEIGHT/2 + 5, zPos),
 			COLORS.WINDOW, Enum.Material.Neon)
 	end
 
