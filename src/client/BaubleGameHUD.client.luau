@@ -28,7 +28,6 @@ local scoreEvent = eventsFolder:WaitForChild("ScoreUpdated")
 local baubleTouchedEvent = eventsFolder:WaitForChild("BaubleTouched")
 local leaderEvent = eventsFolder:WaitForChild("LeaderUpdated")
 local playerDiedEvent = eventsFolder:WaitForChild("PlayerDied")
-local toggleActiveMode = eventsFolder:WaitForChild("ToggleActiveMode")
 local getPlayerState = eventsFolder:WaitForChild("GetPlayerState")
 
 -- Configuration
@@ -37,7 +36,6 @@ local ACTIVE_MUSIC_ID: string = "rbxassetid://126431844684249"
 
 -- State
 local isActiveMode: boolean = false
-local activeModeEnabled: boolean = true
 local currentScore: number = 0
 local currentGoal: number = 1
 local timeRemaining: number = 0
@@ -122,35 +120,6 @@ leaderLabel.TextSize = 14
 leaderLabel.Font = Enum.Font.Gotham
 leaderLabel.Parent = hudContainer
 
--- Toggle button (positioned far right for landscape iPhone)
-local toggleButton: TextButton = Instance.new("TextButton")
-toggleButton.Name = "ToggleActiveMode"
-toggleButton.Size = UDim2.new(0, 50, 0, 50)
-toggleButton.Position = UDim2.new(1, -60, 0.5, -25) -- Far right, vertically centered
-toggleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
-toggleButton.BackgroundTransparency = 0.3
-toggleButton.BorderSizePixel = 0
-toggleButton.Text = "ON"
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleButton.TextSize = 16
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.Parent = screenGui
-
-local toggleCorner: UICorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 8)
-toggleCorner.Parent = toggleButton
-
-local toggleLabel: TextLabel = Instance.new("TextLabel")
-toggleLabel.Name = "ToggleLabel"
-toggleLabel.Size = UDim2.new(0, 50, 0, 15)
-toggleLabel.Position = UDim2.new(1, -60, 0.5, 30)
-toggleLabel.BackgroundTransparency = 1
-toggleLabel.Text = "GAME"
-toggleLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-toggleLabel.TextSize = 10
-toggleLabel.Font = Enum.Font.Gotham
-toggleLabel.Parent = screenGui
-
 -- Music player
 local musicPlayer: Sound = Instance.new("Sound")
 musicPlayer.Name = "BaubleGameMusic"
@@ -172,10 +141,7 @@ local currentMusicId: string = ""
 ]]
 local function updateHUD(): ()
 	-- Mode label
-	if not activeModeEnabled then
-		modeLabel.Text = "GAME OFF"
-		modeLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-	elseif isActiveMode then
+	if isActiveMode then
 		modeLabel.Text = "ACTIVE!"
 		modeLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
 	else
@@ -224,15 +190,7 @@ end
 	Switch music based on mode
 ]]
 local function updateMusic(activeMusicId: string?): ()
-	local targetId: string
-
-	if not activeModeEnabled then
-		targetId = RELAXED_MUSIC_ID
-	elseif activeMusicId then
-		targetId = activeMusicId
-	else
-		targetId = RELAXED_MUSIC_ID
-	end
+	local targetId: string = activeMusicId or RELAXED_MUSIC_ID
 
 	if targetId ~= currentMusicId then
 		currentMusicId = targetId
@@ -241,28 +199,6 @@ local function updateMusic(activeMusicId: string?): ()
 		print("[BaubleGameHUD] Music changed to", targetId)
 	end
 end
-
---[[
-	Handle toggle button click
-]]
-toggleButton.MouseButton1Click:Connect(function()
-	activeModeEnabled = not activeModeEnabled
-
-	if activeModeEnabled then
-		toggleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
-		toggleButton.Text = "ON"
-	else
-		toggleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-		toggleButton.Text = "OFF"
-	end
-
-	-- Notify server
-	toggleActiveMode:FireServer(activeModeEnabled)
-
-	-- Update display
-	updateHUD()
-	updateMusic(nil)
-end)
 
 -- Event handlers
 gameStateEvent.OnClientEvent:Connect(function(active: boolean, time: number, activeMusicId: string?)
@@ -327,20 +263,10 @@ if success and state then
 	timeRemaining = state.timeRemaining
 	currentScore = state.currentScore
 	currentGoal = state.goal
-	activeModeEnabled = state.activeModeEnabled
 
 	print("[BaubleGameHUD] Got state - score:", currentScore, "goal:", currentGoal)
 
 	leaderLabel.Text = string.format("Leader: %s (%d)", state.leaderName, state.leaderScore)
-
-	-- Update toggle button to match server state
-	if activeModeEnabled then
-		toggleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
-		toggleButton.Text = "ON"
-	else
-		toggleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-		toggleButton.Text = "OFF"
-	end
 else
 	warn("[BaubleGameHUD] Failed to get initial state:", state)
 end

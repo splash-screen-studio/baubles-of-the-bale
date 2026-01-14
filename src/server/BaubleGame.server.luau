@@ -47,10 +47,6 @@ local playerDiedEvent: RemoteEvent = Instance.new("RemoteEvent")
 playerDiedEvent.Name = "PlayerDied"
 playerDiedEvent.Parent = eventsFolder
 
-local toggleActiveMode: RemoteEvent = Instance.new("RemoteEvent")
-toggleActiveMode.Name = "ToggleActiveMode"
-toggleActiveMode.Parent = eventsFolder
-
 local getPlayerState: RemoteFunction = Instance.new("RemoteFunction")
 getPlayerState.Name = "GetPlayerState"
 getPlayerState.Parent = eventsFolder
@@ -60,7 +56,6 @@ type PlayerData = {
 	goal: number,
 	currentScore: number,
 	bestScore: number,
-	activeModeEnabled: boolean,
 }
 
 local playerData: {[Player]: PlayerData} = {}
@@ -86,7 +81,6 @@ local function initPlayerData(player: Player): ()
 		goal = STARTING_GOAL,
 		currentScore = 0,
 		bestScore = 0,
-		activeModeEnabled = true,
 	}
 end
 
@@ -136,8 +130,8 @@ local function onBaubleTouched(bauble: Part, player: Player): ()
 	local data = playerData[player]
 	if not data then return end
 
-	-- Only count if active mode is enabled for this player and game is in active mode
-	if not isActiveMode or not data.activeModeEnabled then return end
+	-- Only count during active mode
+	if not isActiveMode then return end
 
 	-- Increment score
 	data.currentScore = data.currentScore + 1
@@ -213,8 +207,6 @@ local function endActivePeriod(): ()
 	print("[BaubleGame] Active period ended!")
 
 	for player, data in pairs(playerData) do
-		if not data.activeModeEnabled then continue end
-
 		if data.currentScore >= data.goal then
 			-- Success! Increase goal for next round
 			print("[BaubleGame]", player.Name, "succeeded with", data.currentScore, "/", data.goal)
@@ -328,17 +320,6 @@ local function gameLoop(): ()
 	end
 end
 
---[[
-	Handle toggle active mode from client
-]]
-toggleActiveMode.OnServerEvent:Connect(function(player: Player, enabled: boolean)
-	local data = playerData[player]
-	if data then
-		data.activeModeEnabled = enabled
-		print("[BaubleGame]", player.Name, "set active mode to", enabled)
-	end
-end)
-
 -- Player connections
 Players.PlayerAdded:Connect(function(player)
 	initPlayerData(player)
@@ -392,7 +373,6 @@ getPlayerState.OnServerInvoke = function(player: Player)
 		goal = data.goal,
 		leaderName = leaderName,
 		leaderScore = currentLeaderScore,
-		activeModeEnabled = data.activeModeEnabled,
 	}
 end
 
