@@ -97,12 +97,20 @@ leaderLabel.TextSize = 18
 leaderLabel.Font = Enum.Font.Gotham
 leaderLabel.Parent = hudContainer
 
--- Music player
-local musicPlayer: Sound = Instance.new("Sound")
-musicPlayer.Name = "BaubleGameMusic"
-musicPlayer.Volume = 0.25 -- Start with break volume
-musicPlayer.Looped = true
-musicPlayer.Parent = SoundService
+-- Music players - two separate tracks for crossfading
+local breakMusic: Sound = Instance.new("Sound")
+breakMusic.Name = "BreakMusic"
+breakMusic.SoundId = RELAXED_MUSIC_ID
+breakMusic.Volume = 0.25
+breakMusic.Looped = true
+breakMusic.Parent = SoundService
+
+local activeMusic: Sound = Instance.new("Sound")
+activeMusic.Name = "ActiveMusic"
+activeMusic.SoundId = ACTIVE_MUSIC_ID
+activeMusic.Volume = 0
+activeMusic.Looped = true
+activeMusic.Parent = SoundService
 
 -- Loud hit sound effect
 local hitSound: Sound = Instance.new("Sound")
@@ -111,7 +119,8 @@ hitSound.SoundId = "rbxassetid://9125402735" -- Loud pop/impact sound
 hitSound.Volume = 1.0
 hitSound.Parent = SoundService
 
-local currentMusicId: string = ""
+local currentlyActive: boolean = false
+local CROSSFADE_TIME: number = 0.5
 
 --[[
 	Update the HUD display
@@ -241,18 +250,33 @@ local function playZapEffect(fromPos: Vector3, toPos: Vector3): ()
 end
 
 --[[
-	Switch music based on mode
+	Switch music with crossfade - tracks continue where they left off
 ]]
 local function updateMusic(activeMusicId: string?): ()
-	local targetId: string = activeMusicId or RELAXED_MUSIC_ID
+	local shouldBeActive: boolean = (activeMusicId == ACTIVE_MUSIC_ID)
 
-	if targetId ~= currentMusicId then
-		currentMusicId = targetId
-		musicPlayer.SoundId = targetId
-		-- Break music at 25%, active music at 75%
-		musicPlayer.Volume = (targetId == ACTIVE_MUSIC_ID) and 0.75 or 0.25
-		musicPlayer:Play()
-		print("[BaubleGameHUD] Music changed to", targetId)
+	if shouldBeActive == currentlyActive then return end
+	currentlyActive = shouldBeActive
+
+	-- Start both tracks if not playing (they play continuously, just volume changes)
+	if not breakMusic.IsPlaying then
+		breakMusic:Play()
+	end
+	if not activeMusic.IsPlaying then
+		activeMusic:Play()
+	end
+
+	-- Crossfade between tracks
+	if shouldBeActive then
+		-- Fade to active music (75% volume)
+		TweenService:Create(breakMusic, TweenInfo.new(CROSSFADE_TIME), {Volume = 0}):Play()
+		TweenService:Create(activeMusic, TweenInfo.new(CROSSFADE_TIME), {Volume = 0.75}):Play()
+		print("[BaubleGameHUD] Crossfading to active music")
+	else
+		-- Fade to break music (25% volume)
+		TweenService:Create(activeMusic, TweenInfo.new(CROSSFADE_TIME), {Volume = 0}):Play()
+		TweenService:Create(breakMusic, TweenInfo.new(CROSSFADE_TIME), {Volume = 0.25}):Play()
+		print("[BaubleGameHUD] Crossfading to break music")
 	end
 end
 
@@ -332,6 +356,20 @@ else
 end
 
 updateHUD()
-updateMusic(isActiveMode and ACTIVE_MUSIC_ID or nil)
+
+-- Start both music tracks (they run continuously, volume controls which is heard)
+breakMusic:Play()
+activeMusic:Play()
+
+-- Set initial volumes based on current mode
+if isActiveMode then
+	breakMusic.Volume = 0
+	activeMusic.Volume = 0.75
+	currentlyActive = true
+else
+	breakMusic.Volume = 0.25
+	activeMusic.Volume = 0
+	currentlyActive = false
+end
 
 print("[BaubleGameHUD] Bauble game HUD initialized!")
