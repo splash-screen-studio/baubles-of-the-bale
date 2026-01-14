@@ -242,10 +242,7 @@ local function endActivePeriod(): ()
 		scoreEvent:FireClient(player, 0, data.goal)
 	end
 
-	-- Reset leader
-	currentLeader = nil
-	currentLeaderScore = 0
-	leaderEvent:FireAllClients("None", 0)
+	-- Keep leader visible during break (shows who won the round)
 end
 
 --[[
@@ -255,6 +252,11 @@ local function startActivePeriod(): ()
 	print("[BaubleGame] Active period started!")
 	isActiveMode = true
 	timeRemaining = ACTIVE_DURATION
+
+	-- Reset leader for new round
+	currentLeader = nil
+	currentLeaderScore = 0
+	leaderEvent:FireAllClients("None", 0)
 
 	-- Reset scores for all players
 	for player, data in pairs(playerData) do
