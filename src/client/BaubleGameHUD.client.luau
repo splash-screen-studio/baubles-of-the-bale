@@ -154,7 +154,7 @@ toggleLabel.Parent = screenGui
 -- Music player
 local musicPlayer: Sound = Instance.new("Sound")
 musicPlayer.Name = "BaubleGameMusic"
-musicPlayer.Volume = 0.4
+musicPlayer.Volume = 1.0 -- 100% volume
 musicPlayer.Looped = true
 musicPlayer.Parent = SoundService
 
@@ -257,7 +257,13 @@ gameStateEvent.OnClientEvent:Connect(function(active: boolean, time: number, act
 	isActiveMode = active
 	timeRemaining = time
 	updateHUD()
-	updateMusic(activeMusicId)
+
+	-- Start active music 1 second early (when break has 1 second left)
+	if not active and time <= 1 and activeModeEnabled then
+		updateMusic(ACTIVE_MUSIC_ID)
+	else
+		updateMusic(activeMusicId)
+	end
 end)
 
 scoreEvent.OnClientEvent:Connect(function(score: number, goal: number)
