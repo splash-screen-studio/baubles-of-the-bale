@@ -60,8 +60,8 @@ flashOverlay.Parent = screenGui
 -- Main HUD container (top center, compact)
 local hudContainer: Frame = Instance.new("Frame")
 hudContainer.Name = "HUDContainer"
-hudContainer.Size = UDim2.new(0, 160, 0, 55)
-hudContainer.Position = UDim2.new(0.5, -80, 0, 0)
+hudContainer.Size = UDim2.new(0, 180, 0, 55)
+hudContainer.Position = UDim2.new(0.5, -90, 0, 0)
 hudContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 hudContainer.BackgroundTransparency = 0.5
 hudContainer.BorderSizePixel = 0
@@ -116,8 +116,10 @@ local currentMusicId: string = ""
 ]]
 local function updateHUD(): ()
 	if isActiveMode then
-		-- During active: show score
-		mainLabel.Text = string.format("%d / %d", currentScore, currentGoal)
+		-- During active: show score and timer on same line
+		local minutes: number = math.floor(timeRemaining / 60)
+		local seconds: number = timeRemaining % 60
+		mainLabel.Text = string.format("%d/%d  %d:%02d", currentScore, currentGoal, minutes, seconds)
 
 		-- Color based on progress
 		if currentScore >= currentGoal then
